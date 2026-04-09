@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlayLearn - 记忆配对</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f6f9; 
+            font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .header {
+            width: 100%;
+            max-width: 850px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 20px 10px 20px;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: 800;
+            box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3);
+            transition: transform 0.2s;
+        }
+        .back-btn:hover { transform: scale(1.05); }
+
+        .brand-title {
+            font-size: 38px; 
+            font-weight: 900;
+            color: #2d3436;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .brand-title span { color: #0984e3; } 
+
+        .game-wrapper {
+            width: 100%;
+            max-width: 800px; 
+            background-color: #ffffff; 
+            border-radius: 24px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08); 
+            border: 3px solid #e1e5ee; 
+            overflow: hidden; 
+            margin-top: 10px;
+            padding: 10px 0; 
+        }
+
+        #game-container {
+            width: 100%;
+            text-align: center; 
+            padding: 0;
+            margin: 0;
+        }
+
+        #game-container canvas {
+            display: block;
+            margin: 0 auto !important; 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button class="back-btn" onclick="window.history.back()">⬅ Back</button>
+        <div class="brand-title">Play<span>Learn</span></div>
+        <div style="width: 80px;"></div> 
+    </div>
+
+    <div class="game-wrapper">
+        <div id="game-container"></div>
+    </div>
+
+    <script>
+        const levelsData = [
+            { level: 1, pairs: 3, flipDelay: 800, maxMoves3Star: 6 },
+            { level: 2, pairs: 4, flipDelay: 800, maxMoves3Star: 8 },
+            { level: 3, pairs: 6, flipDelay: 800, maxMoves3Star: 14 },
+            { level: 4, pairs: 8, flipDelay: 800, maxMoves3Star: 20 },
+            { level: 5, pairs: 8, flipDelay: 400, maxMoves3Star: 18 },
+            { level: 6, pairs: 10, flipDelay: 700, maxMoves3Star: 26 },
+            { level: 7, pairs: 10, flipDelay: 400, maxMoves3Star: 24 },
+            { level: 8, pairs: 12, flipDelay: 600, maxMoves3Star: 34 },
+            { level: 9, pairs: 12, flipDelay: 350, maxMoves3Star: 30 },
+            { level: 10, pairs: 15, flipDelay: 300, maxMoves3Star: 40 }
+        ];
+
+        const themePools = [
+            ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵'], 
+            ['🍎', '🍌', '🍇', '🍉', '🍓', '🍒', '🍑', '🍍', '🥝', '🍋', '🥥', '🥑', '🍆', '🥕', '🌽'], 
+            ['🚗', '🚓', '🚒', '🚜', '🚁', '🚀', '🛸', '⛵', '🛵', '🚲', '🛴', '🛶', '🚢', '🚆', '🛩️']
+        ];
+
+        let currentLevelIndex = 0;
+
+        const config = {
+            type: Phaser.AUTO,
+            transparent: true, 
+            scale: {
+                mode: Phaser.Scale.FIT, 
+                parent: 'game-container',
+                autoCenter: Phaser.Scale.NO_CENTER, 
+                width: 800,
+                height: 850 
+            },
+            scene: { create: create }
+        };
+
+        const game = new Phaser.Game(config);
+
+        let firstCard = null;
+        let secondCard = null;
+        let isProcessing = false;
+        let matchedPairs = 0;
+        let moves = 0;
+        
+        let timeTaken = 0;
+        let timerEvent;
+        let timeTextHUD;
+        let movesTextHUD;
+        let comboCount = 0;
+        let isGameOver = false;
+
+        let cardsFlippedThisTurn = 0;
+        let cardsFlippedBackThisTurn = 0;
+
+        function create() {
+            this.children.removeAll();
+            if (timerEvent) timerEvent.remove();
+
+            let levelConfig = levelsData[currentLevelIndex];
+            matchedPairs = 0;
+            moves = 0;
+            timeTaken = 0;
+            comboCount = 0;
+            isGameOver = false;
+            
+            cardsFlippedThisTurn = 0;
+            cardsFlippedBackThisTurn = 0;
+            firstCard = null;
+            secondCard = null;
+            isProcessing = false;
+
+            this.add.text(400, 40, `LEVEL ${levelConfig.level}`, { 
+                fontSize: '32px', fill: '#2d3436', fontStyle: 'bold', fontFamily: 'Nunito'
+            }).setOrigin(0.5);
+
+            timeTextHUD = this.add.text(150, 40, `⏱️ Time: 0s`, { 
+                fontSize: '24px', fill: '#d63031', fontStyle: 'bold', fontFamily: 'Nunito'
+            }).setOrigin(0.5);
+
+            movesTextHUD = this.add.text(650, 40, `👟 Moves: 0`, { 
+                fontSize: '24px', fill: '#0984e3', fontStyle: 'bold', fontFamily: 'Nunito'
+            }).setOrigin(0.5);
+
+            timerEvent = this.time.addEvent({
+                delay: 1000,
+                callback: () => {
+                    if(!isGameOver) {
+                        timeTaken++;
+                        timeTextHUD.setText(`⏱️ Time: ${timeTaken}s`);
+                    }
+                },
+                loop: true
+            });
+
+            let randomTheme = Phaser.Utils.Array.GetRandom(themePools);
+            let shuffledTheme = Phaser.Utils.Array.Shuffle([...randomTheme]);
+            let selectedEmojis = shuffledTheme.slice(0, levelConfig.pairs);
+            
+            let cardsData = selectedEmojis.concat(selectedEmojis); 
+            Phaser.Utils.Array.Shuffle(cardsData);
+
+            const totalCards = cardsData.length;
+            let cols = Math.ceil(Math.sqrt(totalCards));
+            let rows = Math.ceil(totalCards / cols);
+            
+            if (totalCards === 6) { cols = 3; rows = 2; }
+            else if (totalCards === 8) { cols = 4; rows = 2; }
+            else if (totalCards === 10) { cols = 5; rows = 2; }
+            else if (totalCards === 12) { cols = 4; rows = 3; }
+            else if (totalCards === 16) { cols = 4; rows = 4; }
+            else if (totalCards === 20) { cols = 5; rows = 4; }
+            else if (totalCards === 24) { cols = 6; rows = 4; }
+            else if (totalCards === 30) { cols = 6; rows = 5; }
+
+            let baseSpacingX = 135;
+            let baseSpacingY = 165;
+            
+            let requiredWidth = cols * baseSpacingX;
+            let requiredHeight = rows * baseSpacingY;
+            
+            // ⭐【核心大升级：动态放大镜引擎】⭐
+            // 移除了只允许缩小的限制！现在允许最高放大 1.6 倍，让前几关的卡片巨大且饱满！
+            let scaleFactor = Math.min(740 / requiredWidth, 600 / requiredHeight, 1.6);
+            
+            let actualGridW = (cols - 1) * baseSpacingX * scaleFactor;
+            let actualGridH = (rows - 1) * baseSpacingY * scaleFactor;
+            
+            let startX = 400 - (actualGridW / 2);
+            // 将中心点稍微下移，保证卡片放大后不会遮挡顶部的计时器
+            let startY = 460 - (actualGridH / 2); 
+
+            for (let i = 0; i < totalCards; i++) {
+                let col = i % cols;
+                let row = Math.floor(i / cols);
+                let x = startX + col * baseSpacingX * scaleFactor;
+                let y = startY + row * baseSpacingY * scaleFactor;
+
+                createCard(this, x, y, cardsData[i], scaleFactor);
+            }
+        }
+
+        function createCard(scene, x, y, emojiStr, scaleFactor) {
+            let card = scene.add.container(x, y);
+            card.setScale(scaleFactor); 
+            card.setSize(120, 150);
+            card.setInteractive();
+            card.emojiValue = emojiStr;
+            card.isFlipped = false;
+            card.isMatched = false;
+
+            let back = scene.add.rectangle(0, 0, 110, 140, 0x0984e3, 1);
+            back.setStrokeStyle(4, 0x74b9ff); 
+            let backText = scene.add.text(0, 0, '?', { fontSize: '50px', color: '#ffffff', fontStyle: 'bold', fontFamily: 'Nunito' }).setOrigin(0.5);
+
+            let front = scene.add.rectangle(0, 0, 110, 140, 0xffffff, 1);
+            front.setStrokeStyle(4, 0x00b894); 
+            let frontText = scene.add.text(0, 0, emojiStr, { fontSize: '60px' }).setOrigin(0.5);
+            
+            front.setVisible(false);
+            frontText.setVisible(false);
+
+            card.add([back, backText, front, frontText]);
+
+            card.on('pointerdown', function () {
+                if (isProcessing || card.isFlipped || card.isMatched || isGameOver) return;
+
+                card.isFlipped = true;
+
+                if (!firstCard) {
+                    firstCard = card;
+                } else {
+                    secondCard = card;
+                    isProcessing = true; 
+                }
+
+                scene.tweens.add({
+                    targets: card,
+                    scaleX: 0,
+                    duration: 120,
+                    onComplete: () => {
+                        back.setVisible(false);
+                        backText.setVisible(false);
+                        front.setVisible(true);
+                        frontText.setVisible(true);
+                        
+                        scene.tweens.add({ 
+                            targets: card, 
+                            scaleX: scaleFactor, 
+                            duration: 120,
+                            onComplete: () => {
+                                cardsFlippedThisTurn++;
+                                if (cardsFlippedThisTurn === 2) {
+                                    cardsFlippedThisTurn = 0; 
+                                    checkMatch(scene, scaleFactor);
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        function checkMatch(scene, scaleFactor) {
+            moves++;
+            movesTextHUD.setText(`👟 Moves: ${moves}`); 
+
+            if (firstCard.emojiValue === secondCard.emojiValue) {
+                firstCard.isMatched = true;
+                secondCard.isMatched = true;
+                comboCount++; 
+                
+                if(comboCount > 1) {
+                    let comboText = scene.add.text(400, 120, `${comboCount}x COMBO!`, { 
+                        fontSize: '40px', fill: '#fdcb6e', fontStyle: 'bold', stroke: '#d63031', strokeThickness: 6, fontFamily: 'Nunito'
+                    }).setOrigin(0.5);
+                    
+                    scene.tweens.add({
+                        targets: comboText,
+                        y: 80, alpha: 0, scale: 1.5,
+                        duration: 1000,
+                        onComplete: () => comboText.destroy()
+                    });
+                }
+
+                scene.tweens.add({ 
+                    targets: [firstCard, secondCard], 
+                    scaleX: scaleFactor * 1.2, scaleY: scaleFactor * 1.2, 
+                    duration: 200,
+                    yoyo: true,
+                    onComplete: () => {
+                        scene.tweens.add({
+                            targets: [firstCard, secondCard],
+                            scaleX: 0, scaleY: 0, alpha: 0,
+                            duration: 300,
+                            onComplete: () => {
+                                matchedPairs++;
+                                resetSelection();
+                                if (matchedPairs === levelsData[currentLevelIndex].pairs) {
+                                    levelComplete(scene);
+                                }
+                            }
+                        });
+                    }
+                });
+            } else {
+                comboCount = 0; 
+                scene.time.delayedCall(levelsData[currentLevelIndex].flipDelay, () => {
+                    flipBack(scene, firstCard, scaleFactor);
+                    flipBack(scene, secondCard, scaleFactor);
+                });
+            }
+        }
+
+        function flipBack(scene, card, scaleFactor) {
+            scene.tweens.add({
+                targets: card,
+                scaleX: 0,
+                duration: 120,
+                onComplete: () => {
+                    card.list[2].setVisible(false);
+                    card.list[3].setVisible(false);
+                    card.list[0].setVisible(true);
+                    card.list[1].setVisible(true);
+                    
+                    scene.tweens.add({ 
+                        targets: card, 
+                        scaleX: scaleFactor, 
+                        duration: 120,
+                        onComplete: () => {
+                            card.isFlipped = false;
+                            cardsFlippedBackThisTurn++;
+                            if (cardsFlippedBackThisTurn === 2) {
+                                cardsFlippedBackThisTurn = 0; 
+                                resetSelection();
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        function resetSelection() {
+            firstCard = null;
+            secondCard = null;
+            isProcessing = false;
+        }
+
+        function levelComplete(scene) {
+            isGameOver = true;
+            let levelConfig = levelsData[currentLevelIndex];
+            
+            let overlay = scene.add.rectangle(400, 425, 800, 850, 0xffffff, 0.92);
+            overlay.setAlpha(0);
+            scene.tweens.add({ targets: overlay, alpha: 1, duration: 500 });
+
+            let starDisplay = '⭐';
+            let feedbackText = 'GOOD!';
+            let feedbackColor = '#0984e3';
+            let isPerfect = false;
+
+            if (moves <= levelConfig.maxMoves3Star) {
+                starDisplay = '⭐⭐⭐';
+                feedbackText = 'PERFECT!';
+                feedbackColor = '#f1c40f'; 
+                isPerfect = true;
+            } else if (moves <= levelConfig.maxMoves3Star + 6) {
+                starDisplay = '⭐⭐';
+                feedbackText = 'EXCELLENT!';
+                feedbackColor = '#00b894'; 
+            }
+
+            let cx = 400; 
+            
+            scene.add.text(cx, 220, starDisplay, { fontSize: '60px', padding: { top: 20, bottom: 20 } }).setOrigin(0.5);
+            scene.add.text(cx, 290, feedbackText, { fontSize: '48px', fill: feedbackColor, fontStyle: 'bold', fontFamily: 'Nunito', align: 'center' }).setOrigin(0.5);
+            
+            scene.add.text(cx, 360, `Total Moves: ${moves}`, { fontSize: '26px', fill: '#2d3436', fontFamily: 'Nunito', fontStyle: 'bold', align: 'center' }).setOrigin(0.5);
+            scene.add.text(cx, 400, `Time Taken: ${timeTaken}s`, { fontSize: '26px', fill: '#d63031', fontFamily: 'Nunito', fontStyle: 'bold', align: 'center' }).setOrigin(0.5);
+            
+            let hintText = isPerfect ? '(⭐ You achieved 3 Stars! ⭐)' : `(Goal for 3 Stars: ${levelConfig.maxMoves3Star} Moves)`;
+            let hintColor = isPerfect ? '#00b894' : '#636e72';
+            scene.add.text(cx, 440, hintText, { fontSize: '18px', fill: hintColor, fontFamily: 'Nunito', fontStyle: isPerfect ? 'bold' : 'normal', align: 'center' }).setOrigin(0.5);
+
+            if (currentLevelIndex < levelsData.length - 1) {
+                let nextBtn = scene.add.rectangle(cx, 520, 240, 60, 0x0984e3, 1).setInteractive();
+                scene.add.text(cx, 520, 'NEXT LEVEL ➡', { fontSize: '22px', fill: '#ffffff', fontStyle: 'bold', fontFamily: 'Nunito' }).setOrigin(0.5);
+                nextBtn.on('pointerdown', () => {
+                    currentLevelIndex++;
+                    scene.scene.restart(); 
+                });
+                
+                let retryBtn = scene.add.rectangle(cx, 595, 240, 45, 0xb2bec3, 1).setInteractive();
+                scene.add.text(cx, 595, '🔄 Retry Level', { fontSize: '18px', fill: '#2d3436', fontStyle: 'bold', fontFamily: 'Nunito' }).setOrigin(0.5);
+                retryBtn.on('pointerdown', () => {
+                    scene.scene.restart(); 
+                });
+
+            } else {
+                scene.add.text(cx, 520, '🎉 ALL 10 LEVELS CLEARED! 🎉', { fontSize: '30px', fill: '#d63031', fontStyle: 'bold', fontFamily: 'Nunito' }).setOrigin(0.5);
+                
+                let replayBtn = scene.add.rectangle(cx, 595, 240, 45, 0xb2bec3, 1).setInteractive();
+                scene.add.text(cx, 595, '🔄 Play Again', { fontSize: '18px', fill: '#2d3436', fontStyle: 'bold', fontFamily: 'Nunito' }).setOrigin(0.5);
+                replayBtn.on('pointerdown', () => {
+                    currentLevelIndex = 0;
+                    scene.scene.restart(); 
+                });
+            }
+        }
+    </script>
+</body>
+</html>

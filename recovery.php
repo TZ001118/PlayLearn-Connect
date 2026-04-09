@@ -177,7 +177,7 @@
         
         .password-input-wrapper input {
             width: 100%;
-            padding-right: 40px; /* 给右边的小眼睛留出空间，防止文字被挡住 */
+            padding-right: 40px; 
         }
         
         .toggle-pwd-btn {
@@ -186,7 +186,7 @@
             background: none;
             border: none;
             font-size: 16px;
-            color: #888888; /* 调整为更高级的灰色 */
+            color: #888888; 
             cursor: pointer;
             padding: 0;
             outline: none;
@@ -195,7 +195,7 @@
         }
         
         .toggle-pwd-btn:hover {
-            color: #ffffff; /* 悬停时变白 */
+            color: #ffffff; 
         }
 
     </style>
@@ -226,7 +226,7 @@
                 <div id="otpError" style="color: #ff4d4d; font-size: 13px; margin-top: 5px; display: none;"></div>
             </div>
             <button class="submit-btn" id="btn-verify" onclick="processVerify()" disabled>Verify</button>
-            <button class="resend-btn" id="resendBtn" disabled>Resend code in 30s</button>
+            <button class="resend-btn" id="resendBtn" disabled onclick="resendOtp()">Resend code in 30s</button>
             <a href="javascript:void(0)" class="back-to-login" onclick="goBackTo1()">Start Over</a>
         </div>
 
@@ -294,14 +294,40 @@
         let currentRealEmail = "";
         let maskedEmailFromBackend = ""; 
         
+        // === ✅ 新增功能：真正向服务器请求发送 OTP 邮件 ===
+        function sendOtpEmail(email) {
+            let formData = new FormData();
+            formData.append('email', email);
 
-        // === 只要用户修改了输入框的内容，就执行这个 ===
+            // 调用后端真正发邮件的接口
+            fetch('send_otp.php', { method: 'POST', body: formData })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status !== "success") {
+                    console.error("Failed to send email:", data.message);
+                    alert("⚠️ Notice: Email sending failed. Please check your mail server configuration.");
+                } else {
+                    console.log("OTP Email successfully sent!");
+                }
+            })
+            .catch(error => {
+                console.error('Error sending email:', error);
+            });
+        }
+
+        // === ✅ 新增功能：点击重发按钮触发真实邮件重发 ===
+        function resendOtp() {
+            // 重新开启倒计时
+            startCountdown(); 
+            // 真正发邮件
+            sendOtpEmail(currentRealEmail); 
+        }
+
         function resetInputState() {
             const val = document.getElementById('identifierInput').value.trim();
             const errorDiv = document.getElementById('recoveryError');
             const btn = document.getElementById('btn-next-1');
 
-            // 只有当用户彻底清空输入框时，才主动隐藏错误提示
             if (val.length === 0) {
                 errorDiv.style.display = 'none';
                 btn.disabled = true;
@@ -310,15 +336,12 @@
             }
         }
 
-        // === 图 2：打字时重置按钮状态 ===
         function resetOTPState() {
             document.getElementById('otpError').style.display = 'none';
             const val = document.getElementById('otpCode').value.trim();
-            // 必须打满 6 位数，按钮才亮
             document.getElementById('btn-verify').disabled = (val.length < 6); 
         }
 
-        // === 图 2 核心魔法：去后端核实验证码 ===
         function processVerify() {
             const enteredCode = document.getElementById('otpCode').value.trim();
             const btnVerify = document.getElementById('btn-verify');
@@ -335,31 +358,23 @@
                 btnVerify.innerText = "Verify";
                 
                 if (data.status === "success") {
-                    // 1. 验证成功，隐藏当前验证码界面
                     document.getElementById('view-2').classList.add('hidden');
 
-                    // ✅ 核心逻辑增强：
-                    // 检查 window.tempAccounts 是否存在且有数据
                     if (window.tempAccounts && window.tempAccounts.length > 1) {
-                        // 场景 A：账户多于 1 个 -> 去 View 4 选账户
                         renderAccountCards(window.tempAccounts);
                         document.getElementById('view-4').classList.remove('hidden');
                     } 
                     else if (window.tempAccounts && window.tempAccounts.length === 1) {
-                        // 场景 B：恰好只有 1 个账户 -> 直接去 View 5 改密码
                         const onlyAcc = window.tempAccounts[0];
                         selectAccount(onlyAcc.username, onlyAcc.username);
                     }
                     else {
-                        // 场景 C：防御性逻辑，万一缓存丢了，提示并返回第一步
                         alert("Session expired or no account found. Please try again.");
                         goBackTo1();
                     }
                 } else {
-                    // 2. 验证失败逻辑
                     document.getElementById('otpError').innerText = data.message;
                     document.getElementById('otpError').style.display = 'block';
-                    
                     btnVerify.disabled = true; 
                 }
             })
@@ -371,14 +386,12 @@
             });
         }
 
-        // === 图 3：打字时重置按钮状态 ===
         function resetEmailInputState() {
             document.getElementById('emailMatchError').style.display = 'none';
             const val = document.getElementById('associatedEmail').value.trim();
             document.getElementById('btn-next-3').disabled = !val.includes('@');
         }
 
-        // === 图 3 核心魔法：验证输入的邮箱对不对，对就去图 2 ===
         function processStep3() {
             const enteredEmail = document.getElementById('associatedEmail').value.trim();
             const btn3 = document.getElementById('btn-next-3');
@@ -387,19 +400,18 @@
             btn3.innerText = "Checking...";
             btn3.disabled = true;
 
-            // 这里用 setTimeout 假装思考了 0.5 秒，让 UX 体验更好
             setTimeout(() => {
                 btn3.innerText = "Next";
 
-                // 把用户打的邮箱，和我们大脑里记的真实邮箱对比 (全转小写)
                 if (enteredEmail.toLowerCase() === currentRealEmail.toLowerCase()) {
-                    // 答对了！隐藏图 3，前往图 2 (验证码页面)
                     document.getElementById('view-3').classList.add('hidden');
                     document.getElementById('displayEmailText').innerText = maskedEmailFromBackend;
                     document.getElementById('view-2').classList.remove('hidden');
-                    startCountdown(); // 开启倒计时！
+                    startCountdown(); 
+                    
+                    // ✅ 核心修改：跳转到输入验证码页面时，真正发送邮件！
+                    sendOtpEmail(currentRealEmail); 
                 } else {
-                    // 答错了！弹出红字，按钮变灰
                     errorDiv3.innerText = "This email does not match the account.";
                     errorDiv3.style.display = 'block';
                     btn3.disabled = true; 
@@ -407,15 +419,12 @@
             }, 500); 
         }
 
-       // === 升级版核心魔法：先查数据库，再决定去哪 ===
         function processStep1() {
             const inputVal = document.getElementById('identifierInput').value.trim();
             const btn = document.getElementById('btn-next-1');
             const errorDiv = document.getElementById('recoveryError');
             
-            // ✅ 新增：开始检查前，先确保红字是消失的，这样用户点第二次时会有“刷新”的感觉
             errorDiv.style.display = 'none';
-
             btn.innerText = "Checking...";
             btn.disabled = true;
 
@@ -428,10 +437,8 @@
                 btn.innerText = "Next"; 
 
                 if (data.status === "success") {
-                    // ... 这里的跳转逻辑保持不变 ...
                     currentRealEmail = data.email; 
                     maskedEmailFromBackend = data.masked_email;
-
                     window.tempAccounts = data.accounts; 
                     const isEmailInput = inputVal.includes('@');
 
@@ -440,6 +447,9 @@
                         document.getElementById('displayEmailText').innerText = data.masked_email;
                         document.getElementById('view-2').classList.remove('hidden');
                         startCountdown();
+                        
+                        // ✅ 核心修改：如果是用邮箱找回，跳转到输入验证码页面时，真正发送邮件！
+                        sendOtpEmail(currentRealEmail);
                     } else {
                         document.getElementById('view-1').classList.add('hidden');
                         document.getElementById('displayNameText').innerText = data.accounts[0].username;
@@ -447,10 +457,8 @@
                         document.getElementById('view-3').classList.remove('hidden');
                     }
                 } else {
-                    // ✅ 关键：后端说没找到人，显示红字
                     errorDiv.innerText = data.message;
                     errorDiv.style.display = 'block';
-                    // 这里不需要 btn.disabled = true，让用户可以直接改了再点
                     btn.disabled = false; 
                 }
             })
@@ -462,18 +470,15 @@
             });
         }
         
-        // === 核心：根据数据库结果动态生成 HTML 卡片 ===
         function renderAccountCards(accountsList) {
             const container = document.getElementById('account-list-container');
-            container.innerHTML = ""; // 清空
+            container.innerHTML = ""; 
 
             accountsList.forEach(acc => {
                 const card = document.createElement('div');
                 card.className = 'account-card';
                 
-                // ✅ 修正后的点击事件：选好账号后，直接跳到图 5 设置新密码
                 card.onclick = function() {
-                    // 调用我们写好的选择函数，它会自动隐藏图 4 并显示图 5
                     selectAccount(acc.username, acc.username);
                 };
 
@@ -485,38 +490,30 @@
             });
         }
 
-        // === 返回第一步 (Start Over / Cancel) ===
-        // === 返回第一步 (Start Over / Cancel) ===
         function goBackTo1() {
-            // 1. 隐藏所有后续视图
             document.getElementById('view-2').classList.add('hidden');
             document.getElementById('view-3').classList.add('hidden');
             document.getElementById('view-4').classList.add('hidden');
             document.getElementById('view-5').classList.add('hidden');
             
-            // 2. 显示图 1
             document.getElementById('view-1').classList.remove('hidden');
 
-            // ✅ 核心修复：彻底清空所有输入框的内容
-            document.getElementById('identifierInput').value = "";   // 清空第一步输入
-            document.getElementById('otpCode').value = "";           // 清空验证码 (解决你的问题)
-            document.getElementById('associatedEmail').value = "";   // 清空安全检查邮箱
-            document.getElementById('newPassword').value = "";       // 清空新密码框
-            document.getElementById('confirmPassword').value = "";   // 清空确认密码框
+            document.getElementById('identifierInput').value = "";   
+            document.getElementById('otpCode').value = "";           
+            document.getElementById('associatedEmail').value = "";   
+            document.getElementById('newPassword').value = "";       
+            document.getElementById('confirmPassword').value = "";   
 
-            // ✅ 核心修复：重置所有按钮和错误提示的状态
             document.getElementById('btn-next-1').disabled = true;
-            document.getElementById('btn-verify').disabled = true;   // 验证码按钮也重置
+            document.getElementById('btn-verify').disabled = true;   
             document.getElementById('btn-update-pwd').disabled = true;
 
-            // 隐藏所有残留的红字报错
             document.getElementById('recoveryError').style.display = 'none';
             document.getElementById('otpError').style.display = 'none';
             document.getElementById('emailMatchError').style.display = 'none';
             document.getElementById('pwdLengthError').style.display = 'none';
             document.getElementById('pwdMatchError').style.display = 'none';
 
-            // 💡 额外贴心优化：停止倒计时（如果有的话）
             clearInterval(timer);
             const resendBtn = document.getElementById('resendBtn');
             if(resendBtn) {
@@ -525,7 +522,6 @@
             }
         }
 
-        // === 倒计时逻辑 (图2用的) ===
         let timer;
         function startCountdown() {
             let timeLeft = 30;
@@ -547,43 +543,29 @@
             }, 1000);
         }
 
-        // === 页面加载完毕后自动执行的终极魔法 ===
         window.onload = function() {
-            // 解析网址里携带的参数
             const urlParams = new URLSearchParams(window.location.search);
             const userFromLogin = urlParams.get('user');
 
-            // 如果发现有传过来的用户名或邮箱
             if (userFromLogin) {
-                // 1. 自动帮用户填进输入框
                 document.getElementById('identifierInput').value = userFromLogin;
-                
-                // 2. 触发一次状态重置，把 Next 按钮点亮
                 resetInputState();
-                
-                // 3. 自动触发去数据库查询的函数！（就像一只无形的手帮你点了 Next）
                 processStep1();
             }
         }
 
-        let accountToRecover = ""; // 记住用户最终选了哪个账号
+        let accountToRecover = ""; 
 
-        // === 点击账号卡片后的动作 (图 4 -> 图 5) ===
         function selectAccount(displayName, subName) {
             accountToRecover = subName; 
             document.getElementById('resetNameText').innerText = displayName;
             document.getElementById('resetSubnameText').innerText = "@" + subName.toLowerCase();
             
-            // 隐藏所有可能的前置画面
             document.getElementById('view-4').classList.add('hidden');
-            document.getElementById('view-2').classList.add('hidden'); // 以防万一
-            
-            // 显示图 5 改密码
+            document.getElementById('view-2').classList.add('hidden'); 
             document.getElementById('view-5').classList.remove('hidden');
         }
 
-        // === 图 5：检查两次密码是否一致 ===
-        // === 图 5：实时检查密码长度和一致性 ===
         function checkNewPassword() {
             const pwd1 = document.getElementById('newPassword').value;
             const pwd2 = document.getElementById('confirmPassword').value;
@@ -592,7 +574,6 @@
             const lenError = document.getElementById('pwdLengthError');
             const matchError = document.getElementById('pwdMatchError');
 
-            // 1. 检查长度 (8-200位)
             let isLengthValid = (pwd1.length >= 8 && pwd1.length <= 200);
             
             if (pwd1.length > 0 && !isLengthValid) {
@@ -601,8 +582,6 @@
                 lenError.style.display = 'none';
             }
 
-            // 2. 检查一致性
-            // 只有当第二个框有内容时才显示“不匹配”红字，避免用户还没开始打字就报错
             let isMatch = (pwd1 === pwd2);
             
             if (pwd2.length > 0 && !isMatch) {
@@ -611,7 +590,6 @@
                 matchError.style.display = 'none';
             }
 
-            // 3. 只有两个条件都满足，按钮才亮起
             if (isLengthValid && isMatch && pwd2.length > 0) {
                 btnUpdate.disabled = false;
             } else {
@@ -619,7 +597,6 @@
             }
         }
 
-        // === 最终提交新密码！ ===
         function submitNewPassword() {
             const finalPwd = document.getElementById('newPassword').value;
             const btnUpdate = document.getElementById('btn-update-pwd');
@@ -627,10 +604,9 @@
             btnUpdate.innerText = "Updating...";
             btnUpdate.disabled = true;
 
-            // 准备要发给后端的数据
             let formData = new FormData();
-            formData.append('username', accountToRecover); // 我们之前记住的用户名
-            formData.append('new_password', finalPwd);    // 新密码
+            formData.append('username', accountToRecover); 
+            formData.append('new_password', finalPwd);    
 
             fetch('update_password.php', {
                 method: 'POST',
@@ -639,11 +615,9 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === "success") {
-                    // 🎉 成功！弹出提示并跳回登录页
                     alert("🎉 Success! Your password has been updated.\nPlease log in with your new password.");
                     window.location.href = 'login.php';
                 } else {
-                    // ❌ 失败
                     alert("❌ Error: " + data.message);
                     btnUpdate.innerText = "Update password";
                     btnUpdate.disabled = false;
@@ -656,19 +630,17 @@
                 btnUpdate.disabled = false;
             });
         }
-        // === 密码显示/隐藏 切换魔法 (FontAwesome 版) ===
+
         function togglePasswordVisibility(inputId, btnElement) {
             const inputField = document.getElementById(inputId);
-            const iconElement = btnElement.querySelector('i'); // 获取按钮里的小图标
+            const iconElement = btnElement.querySelector('i'); 
             
             if (inputField.type === "password") {
                 inputField.type = "text";       
-                // 变成明文，换成睁眼图标
                 iconElement.classList.remove('fa-eye-slash');
                 iconElement.classList.add('fa-eye');
             } else {
                 inputField.type = "password";   
-                // 变回密码，换回闭眼斜线图标
                 iconElement.classList.remove('fa-eye');
                 iconElement.classList.add('fa-eye-slash');
             }
