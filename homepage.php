@@ -143,7 +143,7 @@
                 </div>
             </div>
 
-            <div class="game-card">
+            <div class="game-card" onclick="window.location.href='minesweeper.html'">
                 <img src="img/扫雷.png" alt="Minesweeper" class="game-thumb">
                 <div class="game-info">
                     <h3>Minesweeper</h3>
@@ -151,7 +151,7 @@
                 </div>
             </div>
 
-            <div class="game-card">
+            <div class="game-card" onclick="window.location.href='snake.html'">
                 <img src="img/贪吃蛇.png" alt="Snake" class="game-thumb">
                 <div class="game-info">
                     <h3>Classic Snake</h3>
@@ -159,7 +159,7 @@
                 </div>
             </div>
 
-            <div class="game-card">
+            <div class="game-card" onclick="window.location.href='word_wanderer.html'">
                 <img src="img/Word Wanderer.png" alt="Word Wanderer" class="game-thumb">
                 <div class="game-info">
                     <h3>Word Wanderer</h3>
@@ -172,6 +172,22 @@
                 <div class="game-info">
                     <h3>Emoji Memory Match</h3>
                     <p>Train your brain by finding matching pairs of fun emojis! Great for boosting short-term memory and daily focus.</p>
+                </div>
+            </div>
+
+            <div class="game-card" onclick="window.location.href='math_pop.html'">
+                <img src="img/Math Pop.png" alt="Math Pop" class="game-thumb">
+                <div class="game-info">
+                    <h3>Math Pop</h3>
+                    <p>Solve the math puzzles by popping the correct bubbles. Great for practicing quick calculations.</p>
+                </div>
+            </div>
+
+            <div class="game-card" onclick="window.location.href='odd_one_out.html'">
+                <img src="https://api.dicebear.com/7.x/shapes/svg?seed=OddOneOut&backgroundColor=00cec9" alt="Odd One Out" class="game-thumb">
+                <div class="game-info">
+                    <h3>Odd One Out</h3>
+                    <p>Spot the difference! Find the emoji that doesn't belong to train your observation skills and focus.</p>
                 </div>
             </div>
         </div>
