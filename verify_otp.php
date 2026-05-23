@@ -1,29 +1,17 @@
 <?php
-session_start();
+// verify_otp.php 完整内容
 header('Content-Type: application/json');
+session_start();
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $user_code = $_POST['otp_code'] ?? '';
+$user_otp = $_POST['otp_code'] ?? '';
 
-    // 💡 这里是模拟：如果系统之前没有存过验证码，我们就假装刚才发的是 "123456"
-    // 在真正的系统中，这个 $_SESSION['sent_otp'] 应该是在发送邮件时生成的随机数
-    $real_code = $_SESSION['sent_otp'] ?? '123456'; 
-
-    if (empty($user_code)) {
-        echo json_encode(["status" => "error", "message" => "Please enter the code."]);
-        exit();
-    }
-
-    // 对比用户输入的和我们存的
-    if ($user_code === $real_code) {
-        // 验证成功！销毁这个一次性验证码，防止重复使用
-        unset($_SESSION['sent_otp']);
-        echo json_encode(["status" => "success", "message" => "Code verified!"]);
+if (isset($_SESSION['forgot_otp']) && $user_otp === $_SESSION['forgot_otp']) {
+    if (time() <= $_SESSION['forgot_otp_expiry']) {
+        echo json_encode(["status" => "success"]);
     } else {
-        // 验证失败
-        echo json_encode(["status" => "error", "message" => "Invalid code. Please try again."]);
+        echo json_encode(["status" => "error", "message" => "OTP expired."]);
     }
 } else {
-    echo json_encode(["status" => "error", "message" => "Invalid request method."]);
+    echo json_encode(["status" => "error", "message" => "Invalid code."]);
 }
 ?>

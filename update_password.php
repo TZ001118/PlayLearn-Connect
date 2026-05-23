@@ -1,55 +1,53 @@
 <?php
 header('Content-Type: application/json');
-
-$servername = "localhost";
-$db_username = "root";
-$db_password = "";
-$dbname = "playlearn_db";
-
-$conn = new mysqli($servername, $db_username, $db_password, $dbname);
-
-if ($conn->connect_error) {
-    echo json_encode(["status" => "error", "message" => "Database connection failed."]);
-    exit();
-}
+session_start();
+require 'db_conn.php';
 
 $username = $_POST['username'] ?? '';
+$user_otp = $_POST['otp_code'] ?? '';
 $new_password = $_POST['new_password'] ?? '';
 
-if (empty($username) || empty($new_password)) {
-    echo json_encode(["status" => "error", "message" => "Missing data."]);
+if (empty($username) || empty($user_otp) || empty($new_password)) {
+    echo json_encode(["status" => "error", "message" => "All fields are required."]);
     exit();
 }
-$check_stmt = $conn->prepare("SELECT password FROM users WHERE username = ?");
-$check_stmt->bind_param("s", $username);
-$check_stmt->execute();
-$current_res = $check_stmt->get_result();
 
-if ($row = $current_res->fetch_assoc()) {
-    $old_hashed_password = $row['password'];
+// 1. 验证 OTP
+if (!isset($_SESSION['forgot_otp']) || $user_otp !== $_SESSION['forgot_otp']) {
+    echo json_encode(["status" => "error", "message" => "Invalid verification code."]);
+    exit();
+}
 
-    // 使用 password_verify 比较【新输入的明文】和【数据库里的旧哈希】
-    if (password_verify($new_password, $old_hashed_password)) {
-        // 如果一样，直接报错退出
-        echo json_encode(["status" => "error", "message" => "New password cannot be the same as your old password."]);
+// 2. 验证有效期
+if (time() > $_SESSION['forgot_otp_expiry']) {
+    echo json_encode(["status" => "error", "message" => "OTP has expired."]);
+    exit();
+}
+
+// 3. 检查新密码是否与旧密码相同
+$stmt = $conn->prepare("SELECT password FROM users WHERE username = ?");
+$stmt->bind_param("s", $username);
+$stmt->execute();
+$res = $stmt->get_result();
+if ($row = $res->fetch_assoc()) {
+    if (password_verify($new_password, $row['password'])) {
+        echo json_encode(["status" => "error", "message" => "New password cannot be the same as old password."]);
         exit();
     }
 }
-$check_stmt->close();
 
-// ✅ 注意这里：函数名必须是 password_hash，不是 password
+// 4. 更新密码
 $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+$update_stmt = $conn->prepare("UPDATE users SET password = ? WHERE username = ?");
+$update_stmt->bind_param("ss", $hashed_password, $username);
 
-// ✅ 注意这里：SET password = ?，这里的 password 是你的数据库列名
-$stmt = $conn->prepare("UPDATE users SET password = ? WHERE username = ?");
-$stmt->bind_param("ss", $hashed_password, $username);
-
-if ($stmt->execute()) {
-    echo json_encode(["status" => "success"]);
+if ($update_stmt->execute()) {
+    unset($_SESSION['forgot_otp']);
+    unset($_SESSION['forgot_otp_expiry']);
+    echo json_encode(["status" => "success", "message" => "Password updated!"]);
 } else {
-    echo json_encode(["status" => "error", "message" => $stmt->error]);
+    echo json_encode(["status" => "error", "message" => "Update failed."]);
 }
-
-$stmt->close();
+$update_stmt->close();
 $conn->close();
 ?>

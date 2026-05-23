@@ -3,305 +3,379 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <title>PLAYLEARN - Log In</title>
-    <style>
-        /* --- 继承你之前的完美样式 --- */
-        body {
-            background-color: #151313; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-
-        /* 右上角变成跳回注册页的按钮 */
-        .signup-header-btn {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            
-            width: 100px;         
-            height: 38px;          
-            display: flex;         
-            justify-content: center;
-            align-items: center;
-            box-sizing: border-box; 
-         
-
-            background-color: white;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 14px;       
-            cursor: pointer;
-            transition: 0.2s;
-            text-decoration: none;
-            color: black;
-        }
-        .signup-header-btn:hover { background-color: #f0f0f0; }
-
-        .logo {
-            text-align: center;
-            font-size: 40px; 
-            font-weight: 900;
-            margin-bottom: 25px; 
-            letter-spacing: 2px;
-            color: #ffffff; 
-        }
-
-        .login-container {
-            background-color: #2b2b2b; 
-            color: white;
-            width: 400px;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            box-sizing: border-box;
-        }
-
-        .subtitle {
-            text-align: center;
-            font-size: 14px;
-            margin-bottom: 30px;
-            font-weight: bold;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group label {
-            font-size: 15px;
-            margin-bottom: 5px;
-            color: #dcdcdc;
-        }
-
-        /* --- 升级版输入框样式 --- */
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            padding-right: 40px; /* ✅ 留出小眼睛的空间 */
-            border-radius: 6px;
-            border: 1px solid #555;
-            background-color: #1a1a1a;
-            color: white;
-            box-sizing: border-box;
-            font-size: 14px;
-            transition: background-color 0.2s;
-        }
-        input:focus { outline: none; border-color: #aaaaaa; }
-
-        /* ✅ 小眼睛按钮专属样式 */
-        .password-input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        
-        .toggle-pwd-btn {
-            position: absolute;
-            right: 12px;
-            background: none;
-            border: none;
-            font-size: 16px;
-            color: #888888;
-            cursor: pointer;
-            padding: 0;
-            outline: none;
-            transition: color 0.2s;
-            z-index: 10;
-        }
-        
-        .toggle-pwd-btn:hover {
-            color: #ffffff;
-        }
-
-        .submit-btn {
-            width: 100%; padding: 15px; background-color: #fff; color: #000;
-            border: none; border-radius: 8px; font-size: 16px; font-weight: bold;
-            cursor: pointer; margin-top: 20px; transition: 0.2s;
-        }
-        .submit-btn:hover { background-color: #e6e6e6; }
-        
-        /* 禁用状态的灰色按钮 */
-        .submit-btn:disabled {
-            background-color: #555555 !important;
-            color: #888888 !important;
-            cursor: not-allowed;
-        }
-
-        /* 1. 框内新标题样式 */
-        .login-header-title {
-            text-align: center;
-            font-size: 28px;
-            font-weight: 900;
-            margin-bottom: 30px;
-            color: #ffffff;
-            letter-spacing: 1px;
-        }
-
-        /* 2. 辅助链接容器 */
-        .footer-links {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .helper-link {
-            color: #dcdcdc;
-            font-size: 16px;
-            text-decoration: none;
-            transition: 0.2s;
-        }
-        .helper-link:hover { text-decoration: underline; color: #ffffff; }
-
-        /* 3. 隔离线样式 */
-        .separator-line {
-            border: 0;
-            border-top: 1px solid #555; /* 深灰色细线 */
-            margin: 20px 0;
-        }
-
-        /* 4. 底部注册提示 */
-        .signup-prompt {
-            font-size: 16px;
-            color: #dcdcdc;
-        }
-
-        .signup-link {
-            color: #ffffff;
-            font-weight: bold;
-            text-decoration: none;
-            margin-left: 5px;
-        }
-        .signup-link:hover { text-decoration: underline; }
-
-        body {
-            flex-direction: row; /* 或者直接删掉这一行，让它恢复默认居中 */
-        }
-    </style>
-</head>
-<body>
-
-    <a href="signup.php" class="signup-header-btn">Sign Up</a>
-
-    <div class="login-container">
-        <div class="login-header-title">Login to PlayLearn</div>
-
-        <div class="form-group">
-            <label>Username / Email</label>
-            <input type="text" id="loginIdentifier" placeholder="Enter username or email" onkeyup="checkLoginValidity()">
-        </div>
-
-        <div class="form-group">
-            <label>Password</label>
-            <div class="password-input-wrapper">
-                <input type="password" id="password" placeholder="Enter your password" onkeyup="checkLoginValidity()">
-                
-                <button type="button" class="toggle-pwd-btn" onclick="togglePasswordVisibility('password', this)">
-                    <i class="fas fa-eye-slash"></i>
-                </button>
-            </div>
-        </div>
-
-        <button class="submit-btn" id="loginBtn" onclick="submitLogin()" disabled>Log In</button>
-
-        <div class="footer-links">
-            <a href="javascript:void(0)" onclick="goToRecovery()" class="helper-link">Forgot Password or Username?</a>
-            
-            <hr class="separator-line"> <div class="signup-prompt">
-                Don't have an account? <a href="signup.php" class="signup-link">Sign Up</a>
-            </div>
-        </div>
-    </div>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script>
-        // 1. 检查两个框是否都填了，控制按钮亮起
-        function checkLoginValidity() {
-            const user = document.getElementById('loginIdentifier').value.trim()
-            const pass = document.getElementById('password').value;
-            const btn = document.getElementById('loginBtn');
-            
-            if (user !== "" && pass !== "") {
-                btn.disabled = false;
-            } else {
-                btn.disabled = true;
-            }
-        }
-
-        // 2. 发送数据给 process_login.php
-        function submitLogin() {
-            const user = document.getElementById('loginIdentifier').value.trim();
-            const pass = document.getElementById('password').value;
-            const btn = document.getElementById('loginBtn');
-
-            btn.innerText = "Verifying...";
-            btn.disabled = true;
-
-            let formData = new FormData();
-            formData.append('username', user);
-            formData.append('password', pass);
-
-            fetch('process_login.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                btn.innerText = "Log In";
-                btn.disabled = false;
-
-                if (data.status === "success") {
-                    // ✅ 1. 使用后端返回的正式用户名 2. 增加页面跳转
-                    const displayName = data.username ? data.username : user;
-                    alert("🎉 Welcome back, " + displayName + "! Ready to play?");
-                    window.location.href = "index.php"; // 跳转到主页
-                } else {
-                    alert("❌ Login failed: " + data.message);
-                    document.getElementById('password').value = "";
-                    checkLoginValidity(); 
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { DEFAULT: '#0f172a', foreground: '#f8fafc' },
+                        background: '#ffffff',
+                        foreground: '#020817',
+                        muted: { foreground: '#64748b' },
+                        border: '#e2e8f0',
+                        accent: '#f1f5f9'
+                    }
                 }
-            })
-            .catch(error => {
-                btn.innerText = "Log In";
-                btn.disabled = false;
-                console.error('Error:', error);
-                alert("Network connection error. Please try again.");
-            });
-        }
-
-        function goToRecovery() {
-            // 获取用户当前在框里打的字
-            const currentInput = document.getElementById('loginIdentifier').value.trim();
-            
-            // 如果框里有字，就把它拼接在网址后面带过去
-            if (currentInput !== "") {
-                // encodeURIComponent 是为了防止用户输入奇怪的符号破坏网址
-                window.location.href = "recovery.php?user=" + encodeURIComponent(currentInput);
-            } else {
-                // 如果框是空的，就正常跳转
-                window.location.href = "recovery.php";
-            }
-        }
-
-        // === 密码显示/隐藏 切换魔法 ===
-        function togglePasswordVisibility(inputId, btnElement) {
-            const inputField = document.getElementById(inputId);
-            const iconElement = btnElement.querySelector('i'); 
-            
-            if (inputField.type === "password") {
-                inputField.type = "text";       
-                iconElement.classList.remove('fa-eye-slash');
-                iconElement.classList.add('fa-eye');
-            } else {
-                inputField.type = "password";   
-                iconElement.classList.remove('fa-eye');
-                iconElement.classList.add('fa-eye-slash');
             }
         }
     </script>
+    <style>
+        .eye-ball { transition: height 0.15s ease-out; }
+        .blink { height: 2px !important; overflow: hidden; }
+        .blink .pupil { opacity: 0; }
+        .smooth-transform { transition: transform 0.7s ease-in-out, left 0.7s ease-in-out, top 0.7s ease-in-out, height 0.7s ease-in-out; }
+        
+        .signup-header-btn {
+            position: absolute; top: 20px; right: 30px; z-index: 50;
+            width: 100px; height: 38px; display: flex; justify-content: center; align-items: center;
+            background-color: white; border: 1px solid #ccc; border-radius: 8px;
+            font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s;
+            text-decoration: none; color: black; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .signup-header-btn:hover { background-color: #f8fafc; }
+
+        /* ✅ 现代化 Toast 通知样式 */
+        #toast-container {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .custom-toast {
+            min-width: 280px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            color: #333333;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55), opacity 0.4s ease;
+            opacity: 0;
+            border-left: 6px solid transparent;
+        }
+        .custom-toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        .custom-toast.success { border-left-color: #10b981; } /* 绿 */
+        .custom-toast.error { border-left-color: #ef4444; }   /* 红 */
+        .toast-icon { font-size: 20px; }
+        .custom-toast.success .toast-icon { color: #10b981; }
+        .custom-toast.error .toast-icon { color: #ef4444; }
+    </style>
+</head>
+<body class="bg-background text-foreground">
+
+<div id="toast-container"></div>
+<a href="signup.php" class="signup-header-btn">Sign Up</a>
+
+<div class="min-h-screen grid lg:grid-cols-2 overflow-hidden">
+    
+    <div class="relative hidden lg:flex flex-col justify-between bg-gradient-to-br from-primary/90 via-primary to-primary/80 p-12 text-primary-foreground">
+        <div class="relative z-20">
+            <div class="flex items-center gap-2 text-lg font-semibold">
+                <div class="w-8 h-8 rounded-lg bg-primary-foreground/10 backdrop-blur-sm flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                </div>
+                <span>PlayLearn</span>
+            </div>
+        </div>
+
+        <div class="relative z-20 flex items-end justify-center h-[500px]">
+            <div class="relative" style="width: 550px; height: 400px;">
+                <div id="char-purple" class="absolute bottom-0 smooth-transform" style="left: 70px; width: 180px; height: 400px; background-color: #6C3FF5; border-radius: 10px 10px 0 0; z-index: 1; transform-origin: bottom center;">
+                    <div id="eyes-purple" class="absolute flex gap-8 smooth-transform" style="left: 45px; top: 40px;">
+                        <div class="eye-ball w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center overflow-hidden"><div class="pupil w-[7px] h-[7px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="5"></div></div>
+                        <div class="eye-ball w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center overflow-hidden"><div class="pupil w-[7px] h-[7px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="5"></div></div>
+                    </div>
+                </div>
+                <div id="char-black" class="absolute bottom-0 smooth-transform" style="left: 240px; width: 120px; height: 310px; background-color: #2D2D2D; border-radius: 8px 8px 0 0; z-index: 2; transform-origin: bottom center;">
+                    <div id="eyes-black" class="absolute flex gap-6 smooth-transform" style="left: 26px; top: 32px;">
+                        <div class="eye-ball w-[16px] h-[16px] rounded-full bg-white flex items-center justify-center overflow-hidden"><div class="pupil w-[6px] h-[6px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="4"></div></div>
+                        <div class="eye-ball w-[16px] h-[16px] rounded-full bg-white flex items-center justify-center overflow-hidden"><div class="pupil w-[6px] h-[6px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="4"></div></div>
+                    </div>
+                </div>
+                <div id="char-orange" class="absolute bottom-0 smooth-transform" style="left: 0px; width: 240px; height: 200px; background-color: #FF9B6B; border-radius: 120px 120px 0 0; z-index: 3; transform-origin: bottom center;">
+                    <div id="eyes-orange" class="absolute flex gap-8 transition-all duration-200 ease-out" style="left: 82px; top: 90px;">
+                        <div class="pupil w-[12px] h-[12px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="5"></div>
+                        <div class="pupil w-[12px] h-[12px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="5"></div>
+                    </div>
+                </div>
+                <div id="char-yellow" class="absolute bottom-0 smooth-transform" style="left: 310px; width: 140px; height: 230px; background-color: #E8D754; border-radius: 70px 70px 0 0; z-index: 4; transform-origin: bottom center;">
+                    <div id="eyes-yellow" class="absolute flex gap-6 transition-all duration-200 ease-out" style="left: 52px; top: 40px;">
+                        <div class="pupil w-[12px] h-[12px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="5"></div>
+                        <div class="pupil w-[12px] h-[12px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="5"></div>
+                    </div>
+                    <div id="mouth-yellow" class="absolute w-20 h-[4px] bg-[#2D2D2D] rounded-full transition-all duration-200 ease-out" style="left: 40px; top: 88px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative z-50 flex items-center gap-8 text-sm text-primary-foreground/60">
+            <a href="privacy.php" class="hover:text-white transition-colors cursor-pointer">Privacy Policy</a>
+            <a href="terms.php" class="hover:text-white transition-colors cursor-pointer">Terms of Service</a>
+        </div>
+        <div class="absolute inset-0 bg-white/[0.05] pointer-events-none" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px; opacity: 0.1;"></div>
+    </div>
+
+
+    <div class="flex items-center justify-center p-8 bg-background relative">
+        <div class="w-full max-w-[420px]">
+            <div class="text-center mb-10">
+                <h1 class="text-3xl font-bold tracking-tight mb-2">Login to PlayLearn</h1>
+                <p class="text-muted-foreground text-sm">Welcome back! Please enter your details</p>
+            </div>
+
+            <form id="loginForm" class="space-y-5" onsubmit="event.preventDefault(); submitLogin();">
+                
+                <div class="space-y-2">
+                    <label for="loginIdentifier" class="text-sm font-medium">Username / Email</label>
+                    <input id="loginIdentifier" name="username" type="text" placeholder="Enter username or email" autocomplete="off" onkeyup="checkLoginValidity()"
+                           class="flex w-full h-12 px-3 py-2 text-sm bg-background border border-border/60 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+
+                <div class="space-y-2">
+                    <label for="password" class="text-sm font-medium">Password</label>
+                    <div class="relative">
+                        <input id="password" name="password" type="password" placeholder="Enter your password" onkeyup="checkLoginValidity()"
+                               class="flex w-full h-12 px-3 py-2 pr-10 text-sm bg-background border border-border/60 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <button type="button" id="togglePasswordBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                            <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mt-2">
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" id="remember" class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary">
+                        <label for="remember" class="text-sm font-normal cursor-pointer text-muted-foreground">Remember me</label>
+                    </div>
+                    <a href="javascript:void(0)" onclick="goToRecovery()" class="text-sm text-primary hover:underline font-medium">Forgot Password?</a>
+                </div>
+
+                <button type="submit" id="loginBtn" disabled 
+                        class="inline-flex items-center justify-center w-full h-12 text-base font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    Log In
+                </button>
+            </form>
+
+            <div class="text-center text-sm text-muted-foreground mt-8">
+                Don't have an account? <a href="signup.php" class="text-foreground font-medium hover:underline">Sign Up</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ✅ Toast 通知核心函数
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `custom-toast ${type}`;
+        
+        const icon = type === 'success' 
+            ? '<i class="fas fa-check-circle toast-icon"></i>' 
+            : '<i class="fas fa-exclamation-circle toast-icon"></i>';
+            
+        toast.innerHTML = `${icon} <span>${message}</span>`;
+        container.appendChild(toast);
+        
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 400); 
+        }, 3000);
+    }
+
+    const loginIdentifierInput = document.getElementById('loginIdentifier');
+    const passwordInput = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+
+    function checkLoginValidity() {
+        const user = loginIdentifierInput.value.trim();
+        const pass = passwordInput.value;
+        if (user !== "" && pass !== "") {
+            loginBtn.disabled = false;
+        } else {
+            loginBtn.disabled = true;
+        }
+    }
+
+    function submitLogin() {
+        const user = loginIdentifierInput.value.trim();
+        const pass = passwordInput.value;
+
+        loginBtn.innerText = "Verifying...";
+        loginBtn.disabled = true;
+
+        let formData = new FormData();
+        formData.append('username', user);
+        formData.append('password', pass);
+
+        fetch('process_login.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                const displayName = data.username ? data.username : user;
+                // ✅ 替换了原有的 alert()
+                showToast("Welcome back, " + displayName + "! Authenticating...", "success");
+                
+                // 延迟 1.5 秒再跳转，让用户看清楚绿色的通知
+                setTimeout(() => {
+                    if (data.role === 'admin') {
+                        window.location.href = "admin_dashboard.php";
+                    } else if (data.role === 'parent') {
+                        window.location.href = "ParentDashboard.php";
+                    } else {
+                        window.location.href = "homepage.php"; 
+                    }
+                }, 1500);
+
+            } else {
+                // ✅ 替换了原有的 alert()
+                showToast(data.message, "error");
+                passwordInput.value = ""; 
+                checkLoginValidity(); 
+                loginBtn.innerText = "Log In";
+                loginBtn.disabled = true;
+            }
+        })
+        .catch(error => {
+            loginBtn.innerText = "Log In";
+            loginBtn.disabled = false;
+            // ✅ 替换了原有的 alert()
+            showToast("Network connection error. Please try again.", "error");
+        });
+    }
+
+    function goToRecovery() {
+        const currentInput = loginIdentifierInput.value.trim();
+        if (currentInput !== "") {
+            window.location.href = "recovery.php?user=" + encodeURIComponent(currentInput);
+        } else {
+            window.location.href = "recovery.php";
+        }
+    }
+
+    const toggleBtn = document.getElementById('togglePasswordBtn');
+    const eyeIcon = document.getElementById('eyeIcon');
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let showPassword = false;
+
+    const charPurple = document.getElementById('char-purple');
+    const eyesPurple = document.getElementById('eyes-purple');
+    const charBlack = document.getElementById('char-black');
+    const eyesBlack = document.getElementById('eyes-black');
+    const charOrange = document.getElementById('char-orange');
+    const eyesOrange = document.getElementById('eyes-orange');
+    const charYellow = document.getElementById('char-yellow');
+    const eyesYellow = document.getElementById('eyes-yellow');
+    const mouthYellow = document.getElementById('mouth-yellow');
+    const pupils = document.querySelectorAll('.pupil');
+
+    window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX; mouseY = e.clientY;
+        updatePupils(); updateBodyPos();
+    });
+
+    function updatePupils() {
+        pupils.forEach(pupil => {
+            const container = pupil.parentElement;
+            const rect = container.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            let deltaX = mouseX - centerX; let deltaY = mouseY - centerY;
+            
+            if (passwordInput.value.length > 0 && showPassword) {
+                deltaX = -50; deltaY = -40; 
+            }
+            const maxDistance = parseFloat(pupil.getAttribute('data-max') || 5);
+            const distance = Math.min(Math.sqrt(deltaX ** 2 + deltaY ** 2), maxDistance);
+            const angle = Math.atan2(deltaY, deltaX);
+            pupil.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
+        });
+    }
+
+    function calculatePos(element) {
+        if(!element) return { faceX: 0, faceY: 0, skew: 0 };
+        const rect = element.getBoundingClientRect();
+        const deltaX = mouseX - (rect.left + rect.width / 2);
+        const deltaY = mouseY - (rect.top + rect.height / 3);
+        return {
+            faceX: Math.max(-15, Math.min(15, deltaX / 20)),
+            faceY: Math.max(-10, Math.min(10, deltaY / 30)),
+            skew: Math.max(-6, Math.min(6, -deltaX / 120))
+        };
+    }
+
+    function updateBodyPos() {
+        const pPos = calculatePos(charPurple); const bPos = calculatePos(charBlack);
+        const oPos = calculatePos(charOrange); const yPos = calculatePos(charYellow);
+        const hasPwd = passwordInput.value.length > 0;
+
+        if (hasPwd && showPassword) {
+            charPurple.style.transform = `skewX(0deg)`; charPurple.style.height = '400px';
+            eyesPurple.style.left = '20px'; eyesPurple.style.top = '35px';
+            charBlack.style.transform = `skewX(0deg)`; 
+            eyesBlack.style.left = '10px'; eyesBlack.style.top = '28px';
+            charOrange.style.transform = `skewX(0deg)`; 
+            eyesOrange.style.left = '50px'; eyesOrange.style.top = '85px';
+            charYellow.style.transform = `skewX(0deg)`; 
+            eyesYellow.style.left = '20px'; eyesYellow.style.top = '35px';
+            mouthYellow.style.left = '10px'; mouthYellow.style.top = '88px';
+        } else {
+            charPurple.style.transform = `skewX(${pPos.skew}deg)`; charPurple.style.height = '400px';
+            eyesPurple.style.left = `${45 + pPos.faceX}px`; eyesPurple.style.top = `${40 + pPos.faceY}px`;
+            charBlack.style.transform = `skewX(${bPos.skew}deg)`;
+            eyesBlack.style.left = `${26 + bPos.faceX}px`; eyesBlack.style.top = `${32 + bPos.faceY}px`;
+            charOrange.style.transform = `skewX(${oPos.skew}deg)`;
+            eyesOrange.style.left = `${82 + oPos.faceX}px`; eyesOrange.style.top = `${90 + oPos.faceY}px`;
+            charYellow.style.transform = `skewX(${yPos.skew}deg)`;
+            eyesYellow.style.left = `${52 + yPos.faceX}px`; eyesYellow.style.top = `${40 + yPos.faceY}px`;
+            mouthYellow.style.left = `${40 + yPos.faceX}px`; mouthYellow.style.top = `${88 + yPos.faceY}px`;
+        }
+    }
+
+    passwordInput.addEventListener('input', () => { updateBodyPos(); checkLoginValidity(); });
+    
+    toggleBtn.addEventListener('click', () => {
+        showPassword = !showPassword;
+        passwordInput.type = showPassword ? 'text' : 'password';
+        if(showPassword) {
+            eyeIcon.innerHTML = `<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>`;
+        } else {
+            eyeIcon.innerHTML = `<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/>`;
+        }
+        updateBodyPos(); updatePupils();
+    });
+
+    function blinkLoop(charEyesId) {
+        const eyes = document.querySelectorAll(`#${charEyesId} .eye-ball`);
+        if(!eyes.length) return;
+        setInterval(() => {
+            eyes.forEach(eye => eye.classList.add('blink'));
+            setTimeout(() => eyes.forEach(eye => eye.classList.remove('blink')), 150);
+        }, Math.random() * 4000 + 3000);
+    }
+    blinkLoop('eyes-purple'); blinkLoop('eyes-black');
+</script>
 </body>
 </html>

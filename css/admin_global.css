@@ -1,0 +1,235 @@
+:root {
+    /* 默认暗黑模式变量 (Dark Mode) */
+    --bg-dark: #121212;
+    --card-dark: #1e1e1e;
+    --sidebar-bg: #000000;
+    --sidebar-hover: #1a1a1a;
+    --text-main: #ffffff;
+    --text-gray: #aaaaaa;
+    --accent-blue: #3b5998;
+    --border-color: #333333;
+    --input-bg: #2a2a2a;
+}
+
+/* 亮色模式变量覆盖 (Light Mode) */
+body.light-mode {
+    --bg-dark: #f8fafc;        /* 大背景：稍微带点蓝调的极浅灰 */
+    --card-dark: #ffffff;      /* 卡片保持干净的纯白 */
+    --sidebar-bg: #ffffff;     /* 侧边栏纯白 */
+    --sidebar-hover: #4A90E2;  /* 侧边栏菜单悬停背景：主题蓝色 */
+    --text-main: #000000;      /* 核心：平时字体全部强行变纯黑色 */
+    --text-gray: #64748b;      /* 未选中的辅助字体颜色 */
+    --accent-blue: #4A90E2;    /* 主题蓝 */
+    --border-color: #e2e8f0;   /* 极其柔和的分割线 */
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    margin: 0;
+    display: flex;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* --- 侧边栏 100% 还原原本排版架构，拒绝塌陷 --- */
+.sidebar {
+    width: 260px; 
+    height: 100vh;
+    background-color: var(--sidebar-bg);
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-color);
+    z-index: 1000;
+}
+
+.sidebar-header {
+    padding: 30px 20px;
+    font-size: 22px;
+    font-weight: 900 !important; /* 强行让默认暗黑模式下的标题也变超粗 */
+    letter-spacing: 1px;
+    color: var(--accent-blue);
+    text-align: center;
+    height: 62.4px;
+}
+
+/* 亮色模式下强行让左上角标题变黑 */
+body.light-mode .sidebar-header {
+    color: #000000 !important;
+    font-weight: 900 !important; 
+    letter-spacing: 1px;
+}
+
+.menu-item {
+    padding: 15px 25px;
+    display: flex;
+    align-items: center;
+    color: var(--text-gray);
+    text-decoration: none;
+    transition: 0.2s;
+    border-left: 4px solid transparent;
+}
+
+/* 暗黑模式下的 Hover 与 Active */
+.menu-item:hover, .menu-item.active {
+    color: var(--text-main);
+    background-color: var(--sidebar-hover);
+    border-left: 4px solid var(--accent-blue);
+}
+
+/* 亮色模式独立控制：平时纯黑字，Hover/选中时蓝底白字 ⬜ */
+body.light-mode .menu-item {
+    color: #000000 !important;              
+    background-color: transparent !important;
+    border-left: 4px solid transparent !important;
+}
+
+body.light-mode .menu-item:hover,
+body.light-mode .menu-item.active {
+    color: #ffffff !important;              
+    background-color: #4A90E2 !important;   
+    border-left: 4px solid #3b5998 !important;
+}
+
+/* --- 主内容区 100% 还原原本间距 --- */
+.main-content {
+    margin-left: 260px; 
+    width: calc(100% - 260px);
+    padding: 40px;
+    box-sizing: border-box;
+}
+
+.stat-card, .content-card {
+    background-color: var(--card-dark);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+h2, h3, h4, .card-title, .stat-card p { color: var(--text-main); }
+p, .stat-card h3 { color: var(--text-gray); }
+
+/* DataTables 适配 */
+.dataTables_wrapper .dataTables_length, 
+.dataTables_wrapper .dataTables_filter, 
+.dataTables_wrapper .dataTables_info, 
+.dataTables_wrapper .dataTables_paginate {
+    color: var(--text-main) !important;
+}
+
+table.dataTable { 
+    background-color: var(--card-dark) !important; 
+    color: var(--text-main) !important; 
+    border-bottom: 1px solid var(--border-color) !important; 
+}
+
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+    background-color: var(--card-dark) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+/* =========================================================================
+   ✨ 模态弹窗/大表单专属：Cancel 红色，Upload/Publish 绿色
+   ========================================================================= */
+.btn-cancel,
+button[onclick*="closeModal"],
+button[onclick*="closeScoreModal"],
+button[class*="cancel"],
+.modal-footer .btn-light {
+    background-color: #e74c3c !important; 
+    color: #ffffff !important;            
+    border: 1px solid #e74c3c !important;
+    padding: 10px 24px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.btn-cancel:hover, button[onclick*="closeModal"]:hover { background-color: #c0392b !important; }
+
+.btn-upload,
+.btn-publish,
+button[type="submit"],
+input[type="submit"],
+button[class*="publish"],
+button[class*="upload"] {
+    background-color: #2ecc71 !important; 
+    color: #ffffff !important;            
+    border: 1px solid #2ecc71 !important;
+    padding: 10px 24px !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.btn-upload:hover, .btn-publish:hover { background-color: #27ae60 !important; }
+
+
+/* =========================================================================
+   ⚡ 终极精细化控制：数据表格(Table) 与 游戏卡片(Card) 内所有操作按钮
+   ========================================================================= */
+/* 核心排队令：强制所有表格和卡片里的操作按钮全部变小、并列，绝不换行！ */
+.main-content table button,
+.main-content table .studio-btn,
+.main-content table .btn-ban,
+.main-content table a,
+.main-content div[class*="card"] a,
+.main-content div[class*="card"] button {
+    display: inline-block !important;         /* 👈 核心：强制行内块流，允许横向并排 */
+    vertical-align: middle !important;
+    width: auto !important;
+    min-width: 65px !important;               /* 精致微缩尺寸 */
+    padding: 6px 12px !important;             /* 紧凑内边距，大小刚刚好 */
+    font-size: 12px !important;               /* 适合操作列的精致字体 */
+    font-weight: 600 !important;
+    border-radius: 6px !important;            
+    text-align: center !important;
+    text-decoration: none !important;
+    margin: 2px 4px !important;                /* 👈 核心：左右留出精确小间距，确保 100% 左右同行并排 */
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-sizing: border-box !important;
+}
+
+/* 🟦 1. View ＆ Edit 按钮样式：高档蓝底 ＋ 纯黑字 */
+.main-content table .studio-btn,
+.main-content table .btn-view,
+.main-content table button[onclick*="goToUserManagement"],
+.main-content table button[onclick*="viewUserDetails"],
+.main-content div[class*="card"] a[href*="edit"],
+.main-content div[class*="card"] button[onclick*="openEditModal"] {
+    background-color: #4A90E2 !important;     /* 蓝色底 */
+    border: 1px solid #4A90E2 !important;
+    color: #000000 !important;                /* 👈 强行变纯黑色字体 */
+}
+.main-content table .studio-btn:hover,
+.main-content div[class*="card"] a[href*="edit"]:hover {
+    opacity: 0.85 !important;
+}
+
+/* 🟥 2. Ban ＆ Delete 按钮样式：危险正红底 ＋ 纯白字 */
+.main-content table .btn-ban,
+.main-content table button[onclick*="ban"],
+.main-content table a[href*="ban"],
+.main-content table a[href*="process_ban"],
+.main-content table a[href*="delete"],
+.main-content div[class*="card"] a[href*="delete"],
+.main-content div[class*="card"] a[href*="process_delete"] {
+    background-color: #e74c3c !important;     /* 👈 强行变回充满正义感的高级正红色背景 */
+    border: 1px solid #e74c3c !important;
+    color: #ffffff !important;                /* 👈 强行变纯白字体，清晰高档 */
+}
+.main-content table .btn-ban:hover,
+.main-content table a[href*="ban"]:hover,
+.main-content div[class*="card"] a[href*="delete"]:hover {
+    background-color: #c0392b !important;     /* 悬停深红 */
+    border-color: #c0392b !important;
+    color: #ffffff !important;
+}
+

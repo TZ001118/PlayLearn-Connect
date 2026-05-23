@@ -1,0 +1,623 @@
+<?php
+session_start();
+require '../db_conn.php';
+include('../maintenance_check.php');
+// 1. 先检查是否登录，没登录直接踢回登录页
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+$uid = $_SESSION['user_id'];
+
+// 2. 实时检查该用户的状态是否被封禁
+// 使用 prepare 语句更安全，防止 SQL 注入
+$stmt = $conn->prepare("SELECT status FROM users WHERE id = ?");
+$stmt->bind_param("i", $uid);
+$stmt->execute();
+$res = $stmt->get_result();
+$u = $res->fetch_assoc();
+
+if ($u && $u['status'] === 'banned') {
+    session_destroy(); // 销毁所有登录信息
+    header("Location: ../login.php?error=banned"); // 跳回登录页并带上错误提示
+    exit();
+}
+// 更新玩家活跃时间
+$conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_id']);
+?>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PlayLearn - Math Merge 2048</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f6f9; 
+            font-family: 'Nunito', 'Segoe UI', Tahoma, sans-serif;
+            min-height: 100vh;
+        }
+
+        .header {
+            width: 100%;
+            max-width: 850px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 20px 10px 20px;
+            box-sizing: border-box;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: 800;
+            box-shadow: 0 4px 10px rgba(255, 107, 107, 0.3);
+            transition: transform 0.2s;
+        }
+        .back-btn:hover { transform: scale(1.05); }
+
+        .brand-title {
+            font-size: 38px; 
+            font-weight: 900;
+            color: #2d3436;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .brand-title span { color: #0984e3; } 
+
+        .game-wrapper {
+            width: 100%;
+            max-width: 420px; 
+            background-color: #ffffff; 
+            border-radius: 24px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.08); 
+            border: 3px solid #e1e5ee; 
+            margin-top: 10px;
+            padding: 30px 20px; 
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .game-header-2048 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 350px;
+            margin-bottom: 20px;
+        }
+
+        .game-title {
+            font-size: 48px;
+            font-weight: 900;
+            color: #776e65;
+            margin: 0;
+        }
+
+        .score-box {
+            background-color: #bbada0;
+            padding: 5px 20px;
+            border-radius: 8px;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+        .score-box .score-label { font-size: 14px; color: #eee4da; }
+        .score-box #score { font-size: 24px; }
+
+        .btnresult {
+            width: 48px; 
+            height: 48px;
+            background-color: #8f7a66;
+            border-radius: 8px;
+            padding: 0;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.1s;
+        }
+        .btnresult:active { transform: scale(0.9); }
+        .btnresult svg { width: 28px; height: 28px; }
+
+        /* 游戏结束时重置按钮的高亮闪烁动画 */
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 5px #ff4757; transform: scale(1); background-color: #ff4757; }
+            50% { box-shadow: 0 0 20px #ff4757; transform: scale(1.1); background-color: #ff6b81; }
+            100% { box-shadow: 0 0 5px #ff4757; transform: scale(1); background-color: #ff4757; }
+        }
+        .btnresult.glow {
+            animation: pulse-glow 1.5s infinite;
+        }
+
+        /* 棋盘容器添加相对定位，供 Game Over 弹窗使用 */
+        #bigcontine {
+            position: relative; 
+            background-color: #bbada0;
+            padding: 10px;
+            border-radius: 12px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+            width: 350px;
+            height: 350px;
+            box-sizing: border-box;
+            /* 触控优化：防止双击放大等操作 */
+            touch-action: none; 
+        }
+
+        /* 游戏结束覆盖层 */
+        #game-over-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(238, 228, 218, 0.73);
+            z-index: 100;
+            display: none; /* 默认隐藏 */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+        }
+        #game-over-overlay h1 {
+            font-size: 45px;
+            font-weight: 900;
+            color: #776e65;
+            margin: 0;
+        }
+
+        @media (max-width: 400px) {
+            #bigcontine { width: 300px; height: 300px; gap: 8px; padding: 8px; }
+            .game-wrapper { padding: 20px 10px; }
+            .grid-cell { font-size: 26px; }
+            .btnc { width: 55px; height: 55px; }
+            #game-over-overlay h1 { font-size: 35px; }
+        }
+
+        .grid-cell {
+            background-color: rgba(238, 228, 218, 0.35);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: #776e65;
+            /* 删除了 transition 属性，现在颜色变化瞬间完成 */
+            width: 100%;
+            height: 100%;
+        }
+
+        #btncontrol {
+            margin-top: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .ctrl-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .btnc {
+            width: 60px;
+            height: 60px;
+            background-color: #e1e5ee;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: background 0.2s, transform 0.1s;
+        }
+        .btnc:active {
+            transform: scale(0.9);
+            background-color: #d1d8e0;
+        }
+        .btnc svg { width: 34px; height: 34px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <button class="back-btn" onclick="window.history.back()">⬅ BACK</button>
+        <div class="brand-title">Play<span>Learn</span></div>
+        <div style="width: 80px;"></div> 
+    </div>
+
+    <div class="game-wrapper">
+        
+        <div class="game-header-2048">
+            <h1 class="game-title">2048</h1>
+            <div class="score-box">
+                <div class="score-label">SCORE</div>
+                <div id="score">0</div>
+            </div>
+            <button class="btnresult" id="btn-reset" onclick="x()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+            </button>
+        </div>
+
+        <div id="bigcontine">
+            <div id="game-over-overlay">
+                <h1>GAME OVER</h1>
+            </div>
+
+            <div class="grid-cell cy0"><span id="y0"></span></div>
+            <div class="grid-cell cy1"><span id="y1"></span></div>
+            <div class="grid-cell cy2"><span id="y2"></span></div>
+            <div class="grid-cell cy3"><span id="y3"></span></div>
+            
+            <div class="grid-cell cy4"><span id="y4"></span></div>
+            <div class="grid-cell cy5"><span id="y5"></span></div>
+            <div class="grid-cell cy6"><span id="y6"></span></div>
+            <div class="grid-cell cy7"><span id="y7"></span></div>
+            
+            <div class="grid-cell cy8"><span id="y8"></span></div>
+            <div class="grid-cell cy9"><span id="y9"></span></div>
+            <div class="grid-cell cy10"><span id="y10"></span></div>
+            <div class="grid-cell cy11"><span id="y11"></span></div>
+            
+            <div class="grid-cell cy12"><span id="y12"></span></div>
+            <div class="grid-cell cy13"><span id="y13"></span></div>
+            <div class="grid-cell cy14"><span id="y14"></span></div>
+            <div class="grid-cell cy15"><span id="y15"></span></div>
+        </div>
+
+        <div id="btncontrol">
+            <button class="btnc" id="btn-left" onclick="left(),add(0),left(),checksame(),print(),color(),check();">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#2d3436" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+            <div class="ctrl-col">
+                <button class="btnc" id="btn-up" onclick="up(),add(1),up(),checksame(),print(),color(),check();">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#2d3436" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                </button>
+                <button class="btnc" id="btn-down" onclick="down(),add(2),down(),checksame(),print(),color(),check();">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#2d3436" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+            </div>
+            <button class="btnc" id="btn-right" onclick="right(),add(3),right(),checksame(),print(),color(),check();">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#2d3436" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        let score = 0;
+        let line = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        let line_checksame = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        let isScoreUploaded = false;
+        addnumber();
+        addnumber();
+        color();
+        print();
+        function print(){
+            for(let v = 15 ; v > -1 ; v--){
+                let str = 'y' + String(v);
+                let printout = line[v];
+                if(line[v] == 0){
+                    printout = " ";
+                }
+                document.getElementById(str).textContent = printout;
+            }
+            document.getElementById('score').textContent = score;
+        }
+        function calculus0(){
+            let number0 = 0;
+            for(let v = 0 ; v < 16 ; v++){
+                if(line[v] == 0){
+                    number0++;
+                }
+            }
+            return number0;
+        }
+        function addnumber(){
+            let num_0 = calculus0();
+            let input_0 = Math.random() * num_0;
+            let or2_4 = Math.random() * 6;
+            for(let v = 0 ; v < 16 ; v++){
+                if(line[v] == 0){
+                    if(input_0 <= 1){
+                        if(or2_4 > 5){
+                            line[v] = 4;
+                        }else{
+                            line[v] = 2;
+                        }
+                        break;
+                    }else{
+                        input_0--;
+                    }
+                }
+            }
+        }
+        function add(b){
+            for(v = 0 ; v < 4 ; v++){
+                // left
+                let vv1 = 0 + v * 4;
+                let vv2 = 1 + v * 4;
+                let vv3 = 2 + v * 4;
+                let vv4 = 3 + v * 4;
+                if(b == 1){
+                    //up
+                    vv1 = 0 + v;
+                    vv2 = 4 + v;
+                    vv3 = 8 + v;
+                    vv4 = 12 + v;
+                }else if(b == 2){
+                    //down
+                    vv4 = 3 - v;
+                    vv3 = 7 - v;
+                    vv2 = 11 - v;
+                    vv1 = 15 - v;
+                }else if(b == 3){
+                    //right
+                    vv4 = 12 - v * 4;
+                    vv3 = 13 - v * 4;
+                    vv2 = 14 - v * 4;
+                    vv1 = 15 - v * 4;
+                }
+                if((line[vv1] == line[vv2])&&(line[vv1] != 0)){
+                        line[vv1] = line[vv1] * 2;
+                        score+=line[vv1];
+                        line[vv2] = 0;
+                }
+                if((line[vv2] == line[vv3])&&(line[vv2] != 0)){
+                        line[vv2] = line[vv2] * 2;
+                        score+=line[vv2];
+                        line[vv3] = 0;
+                }
+                if((line[vv3] == line[vv4])&&(line[vv3] != 0)){
+                        line[vv3] = line[vv3] * 2;
+                        score+=line[vv3];
+                        line[vv4] = 0;
+                }
+            }
+        }
+        function up(){
+            for(let v = 0 ; v < 4 ; v++){
+                let z = 0;
+                for(let c = 0 ; c < 4 ; c++){
+                    if(line[c * 4 + v] != 0){
+                        let x = line[c * 4 + v - (z * 4)];
+                        line[c * 4 + v - (z * 4)] = line[c * 4 + v]
+                        line[c * 4 + v] = x;
+                    }else{
+                        z++;
+                    }
+                }
+            }
+        }
+        function down(){
+            for(let v = 0 ; v < 4 ; v++){
+                let z = 0;
+                for(let c = 3 ; c > -1 ; c--){
+                    if(line[c * 4 + v] != 0){
+                        let x = line[c * 4 + v + (z * 4)];
+                        line[c * 4 + v + (z * 4)] = line[c * 4 + v]
+                        line[c * 4 + v] = x;
+                    }else{
+                        z++;
+                    }
+                }
+            }
+        }
+        function left(){
+            for(let v = 0 ; v < 4 ; v++){
+                let z = 0;
+                for(let c = 0 ; c < 4 ; c++){
+                    if(line[c + v * 4] != 0){
+                        let x = line[c + v * 4 - z];
+                        line[c + v * 4 - z] = line[c + v * 4]
+                        line[c + v * 4] = x;
+                    }else{
+                        z++;
+                    }
+                }
+            }
+        }
+        function right(){
+            for(let v = 0 ; v < 4 ; v++){
+                let z = 0;
+                for(let c = 3 ; c > -1 ; c--){
+                    if(line[c + v * 4] != 0){
+                        let x = line[c + v * 4 + z];
+                        line[c + v * 4 + z] = line[c + v * 4]
+                        line[c + v * 4] = x;
+                    }else{
+                        z++;
+                    }
+                }
+            }
+        }
+        function check(){
+            let check1 = true;
+            let check2 = true;
+            for(let v = 0 ; v < 16 ; v++){
+                if(line[v] == 0){
+                    check2 = false;
+                }
+            }
+            for(let v = 0 ; v < 15 ; v++){
+                if((line[v] == line[v + 1]) && (v != 3) && (v != 7) && (v != 11)) {
+                    check2 = false;
+                }
+            }
+            for(let v = 0 ; v < 4 ; v++){
+                for(let c = 0 ; c < 3 ; c++){
+                    if((line[v + c * 4] == line[v + c * 4 + 4])){
+                        check2 = false;
+                    }
+                }
+            }
+            if(check2){
+                // 1. 原有的显示 Game Over 蒙版
+                document.getElementById('game-over-overlay').style.display = 'flex';
+                document.getElementById('btn-reset').classList.add('glow');
+                
+            // 找到这部分 (大约在第 301 行)
+            if (!isScoreUploaded) {
+                isScoreUploaded = true; 
+                let finalScore = score; 
+
+                // ✅ 用下面的代码替换掉原来的 FormData 和 fetch
+                fetch('../save_score.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        game_name: 'Math Merge 2048', // 必须和 Admin 里设置的名字一模一样！
+                        score: finalScore,
+                        level_reached: 1 // 2048 没有关卡，默认写 1
+                    })
+                })
+                .then(response => response.json())
+                .then(data => console.log("Score saved:", data))
+                .catch(error => console.error('Upload Error:', error));
+            }
+        }
+    }
+        function x(){
+            // 【修改点】：重新开始时，隐藏蒙版，取消按钮发光
+            document.getElementById('game-over-overlay').style.display = 'none';
+            document.getElementById('btn-reset').classList.remove('glow');
+
+            isScoreUploaded = false;
+
+            for(let v = 0 ; v < 16 ; v++){
+                    line[v] = 0;
+            }
+            score = 0;
+            addnumber();
+            addnumber();
+            print();
+            color()
+        }
+        function checksame(){
+            let checksame1 = true;
+            for(let v = 0 ; v < 16 ; v++){
+                if(line[v] != line_checksame[v]) {
+                    addnumber();
+                    break;
+                }
+            }
+            for(let v = 0 ; v < 16 ; v++){
+                line_checksame[v] = line[v];
+            }
+        }
+        function color(){
+            for(let v = 15 ; v > -1 ; v--){
+                let str = 'cy' + String(v);
+                if(line[v] == 0){document.getElementsByClassName(str)[0].style.backgroundColor = 'rgba(238, 228, 218, 0.35)' ;
+                    
+                }else if(line[v] == 2){
+                    document.getElementsByClassName(str)[0].style.backgroundColor = '#eee4da' ;
+                }else if(line[v] == 4){
+                    document.getElementsByClassName(str)[0].style.backgroundColor = '#ede0c8' ;
+                }else if(line[v] == 8){
+                    document.getElementsByClassName(str)[0].style.backgroundColor = '#f2b179' ;
+                }else if(line[v] == 16){
+                    document.getElementsByClassName(str)[0].style.backgroundColor = '#f59563' ;
+                }else if(line[v] == 32){
+                    document.getElementsByClassName(str)[0].style.backgroundColor = '#f67c5f' ;
+                }else if(line[v] == 64){
+                    document.getElementsByClassName(str)[0].style.backgroundColor = '#f65e3b' ;
+                }else if(line[v] == 128){
+                    document.getElementsByClassName(str)[0].style.backgroundColor = '#edcf72' ;
+                }else if(line[v] == 256){
+                    document.getElementsByClassName(str)[0].style.backgroundColor = '#edcc61' ;
+                }else if(line[v] == 512){
+                    document.getElementsByClassName(str)[0].style.backgroundColor = '#edc850' ;
+                }else if(line[v] == 1024){
+                    document.getElementsByClassName(str)[0].style.backgroundColor = '#edc53f' ;
+                }else if(line[v] == 2048){
+                    document.getElementsByClassName(str)[0].style.backgroundColor = '#edc22e' ;
+                }else if(line[v] == 4096){
+                    document.getElementsByClassName(str)[0].style.backgroundColor = '#3c3a32' ;
+                }
+                
+                if(line[v] >= 8) { document.getElementsByClassName(str)[0].style.color = '#f9f6f2'; }
+                else { document.getElementsByClassName(str)[0].style.color = '#776e65'; }
+            }
+        }
+
+        // 电脑端键盘控制
+        document.addEventListener('keydown', function(event) {
+            if(event.key === "ArrowLeft") { document.getElementById('btn-left').click(); }
+            else if(event.key === "ArrowUp") { document.getElementById('btn-up').click(); }
+            else if(event.key === "ArrowDown") { document.getElementById('btn-down').click(); }
+            else if(event.key === "ArrowRight") { document.getElementById('btn-right').click(); }
+        });
+
+        // 【新增点】：全屏触控滑动逻辑 (Swipe Controls) 适配手机端
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+
+        const gameContainer = document.getElementById('bigcontine');
+
+        // 监听手指按下
+        gameContainer.addEventListener('touchstart', function(event) {
+            touchStartX = event.changedTouches[0].screenX;
+            touchStartY = event.changedTouches[0].screenY;
+        }, {passive: false});
+
+        // 监听手指滑动，阻止网页跟着上下滚动
+        gameContainer.addEventListener('touchmove', function(event) {
+            event.preventDefault(); 
+        }, {passive: false});
+
+        // 监听手指离开屏幕，计算滑动方向
+        gameContainer.addEventListener('touchend', function(event) {
+            touchEndX = event.changedTouches[0].screenX;
+            touchEndY = event.changedTouches[0].screenY;
+            handleSwipe();
+        }, {passive: false});
+
+        function handleSwipe() {
+            let dx = touchEndX - touchStartX;
+            let dy = touchEndY - touchStartY;
+            let absDx = Math.abs(dx);
+            let absDy = Math.abs(dy);
+
+            // 设置最小滑动距离 (30px)，防止误触
+            if (Math.max(absDx, absDy) > 30) { 
+                if (absDx > absDy) {
+                    // 水平滑动
+                    if (dx > 0) document.getElementById('btn-right').click();
+                    else document.getElementById('btn-left').click();
+                } else {
+                    // 垂直滑动
+                    if (dy > 0) document.getElementById('btn-down').click();
+                    else document.getElementById('btn-up').click();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
