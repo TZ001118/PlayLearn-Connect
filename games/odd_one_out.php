@@ -221,6 +221,11 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
         let currentScore = 0;
         let targetScore = 0;
         let isProcessing = false;
+        let totalQuestions = 0;
+        let correctAnswers = 0;
+        let reactionSamples = [];
+        let gridStartedAt = Date.now();
+        let gameStartedAt = Date.now();
 
         function showTutorial() {
             document.getElementById('tutorial-overlay').style.display = 'flex';
@@ -239,6 +244,10 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
             currentScore = 0;
             targetScore = lvlConfig.target;
             isProcessing = false;
+            totalQuestions = 0;
+            correctAnswers = 0;
+            reactionSamples = [];
+            gameStartedAt = Date.now();
 
             document.getElementById('level-title').innerText = `LEVEL ${lvlConfig.level}`;
             updateScore();
@@ -258,6 +267,7 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
             
             board.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
             board.innerHTML = '';
+            gridStartedAt = Date.now();
 
             let pair = emojiPairs[Math.floor(Math.random() * emojiPairs.length)];
             let normalEmoji = pair[0];
@@ -290,13 +300,16 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
         function handleTap(isOdd, btnElement) {
             if (isProcessing) return;
             isProcessing = true;
+            totalQuestions++;
+            reactionSamples.push(Date.now() - gridStartedAt);
 
             if (isOdd) {
                 btnElement.classList.add('correct-anim');
                 currentScore++;
+                correctAnswers++;
                 updateScore();
                 
-                setTimeout(() => {
+                setTimeout(function() {
                     if (currentScore >= targetScore) {
                         showGameOver(true);
                     } else {
@@ -306,7 +319,7 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
                 }, 300);
             } else {
                 btnElement.classList.add('wrong-anim');
-                setTimeout(() => {
+                setTimeout(function() {
                     showGameOver(false);
                 }, 400);
             }
@@ -328,9 +341,18 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
                 body: JSON.stringify({ 
                     game_name: 'Odd One Out', 
                     score: currentScore, 
-                    level_reached: currentLevelIndex + 1 
+                    level_reached: currentLevelIndex + 1,
+                    correct_answers: correctAnswers,
+                    total_questions: totalQuestions,
+                    reaction_time_ms: reactionSamples.length ? Math.round(reactionSamples.reduce(function(a, b) {
+                        return a + b;
+                    }, 0) / reactionSamples.length) : null,
+                    duration_seconds: Math.max(1, Math.round((Date.now() - gameStartedAt) / 1000))
                 })
-            }).then(r=>r.json()).then(d=>console.log(d));
+            }).then(function(response) {
+                return response.json();
+            }).then(function() {
+            });
             
             if (isWin) {
                 icon.innerText = "🎉";

@@ -1,8 +1,9 @@
-<<<<<<< HEAD
 <?php
 session_start();
 require 'db_conn.php';
+require_once 'includes/learning_helpers.php';
 include('maintenance_check.php');
+pl_seed_game_metadata($conn);
 // ==========================================
 // 🚀 AJAX BACKEND HANDLERS (MUST BE AT TOP)
 // ==========================================
@@ -48,7 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         if ($check->num_rows > 0) {
             echo json_encode(['status' => 'error', 'message' => 'Already claimed.']);
         } else {
-            $conn->query("INSERT INTO user_quests (user_id, quest_key, is_claimed) VALUES ($uid, '$quest_key', 1)");
+            $quest_type = (strpos($quest_key, '_wq') !== false || strpos($quest_key, '_chest') !== false) ? 'weekly' : 'daily';
+            $conn->query("INSERT INTO user_quests (user_id, quest_key, quest_type, is_claimed) VALUES ($uid, '$quest_key', '$quest_type', 1)");
             
             $u = $conn->query("SELECT level, total_exp, weekly_exp FROM users WHERE id = $uid")->fetch_assoc();
             $new_exp = $u['total_exp'] + $exp;
@@ -70,7 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         if ($check->num_rows > 0) {
             echo json_encode(['status' => 'error', 'message' => 'Chest already opened.']);
         } else {
-            $conn->query("INSERT INTO user_quests (user_id, quest_key, is_claimed) VALUES ($uid, '$chest_key', 1)");
+            $quest_type = 'weekly';
+            $conn->query("INSERT INTO user_quests (user_id, quest_key, quest_type, is_claimed) VALUES ($uid, '$chest_key', '$quest_type', 1)");
             echo json_encode(['status' => 'success']);
         }
         exit;
@@ -83,10 +86,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 $games = [];
 $seen_game_names = []; // Tracker for duplicates
 
-$sql = "SELECT l.*, 
+$sql = "SELECT l.*, gab.min_age, gab.max_age,
         (SELECT AVG(rating_score) FROM game_reviews WHERE game_id = l.id AND rating_type = 'student') as fun_avg,
         (SELECT AVG(rating_score) FROM game_reviews WHERE game_id = l.id AND rating_type = 'parent') as edu_avg
-        FROM levels l ORDER BY l.id DESC";
+        FROM levels l
+        LEFT JOIN game_age_bands gab ON gab.game_id = l.id
+        ORDER BY l.id DESC";
 
 $res = $conn->query($sql);
 if ($res && $res->num_rows > 0) {
@@ -95,6 +100,7 @@ if ($res && $res->num_rows > 0) {
         if (!in_array($row['level_name'], $seen_game_names)) {
             $row['fun_rating'] = $row['fun_avg'] !== null ? number_format($row['fun_avg'], 1) : '0.0';
             $row['edu_rating'] = $row['edu_avg'] !== null ? number_format($row['edu_avg'], 1) : '0.0';
+            $row['image_url'] = pl_game_cover_url($row);
             $games[] = $row;
             $seen_game_names[] = $row['level_name'];
         }
@@ -106,6 +112,7 @@ $user_fav_ids = [];
 $claimed_quests = [];
 $weekly_ap = 0;
 $user_level = 1;
+$user_age = null;
 
 if (isset($_SESSION['user_id'])) {
     $uid = intval($_SESSION['user_id']);
@@ -114,11 +121,12 @@ if (isset($_SESSION['user_id'])) {
     while ($f = $fav_res->fetch_assoc()) { $user_fav_ids[] = $f['game_id']; }
     
     // Gamification state
-    $u_query = $conn->query("SELECT level, weekly_exp FROM users WHERE id = $uid");
+    $u_query = $conn->query("SELECT level, weekly_exp, birthday FROM users WHERE id = $uid");
     if ($u_query && $u_query->num_rows > 0) {
         $u_data = $u_query->fetch_assoc();
         $user_level = $u_data['level'] > 0 ? $u_data['level'] : 1;
         $weekly_ap = $u_data['weekly_exp'] ?? 0;
+        $user_age = pl_child_age($u_data['birthday'] ?? null);
     }
 
     // Claimed Quests & Chests
@@ -172,6 +180,7 @@ if (isset($_SESSION['user_id'])) {
         while ($row = $h_res->fetch_assoc()) {
             $row['fun_rating'] = $row['fun_avg'] !== null ? number_format($row['fun_avg'], 1) : '0.0';
             $row['edu_rating'] = $row['edu_avg'] !== null ? number_format($row['edu_avg'], 1) : '0.0';
+            $row['image_url'] = pl_game_cover_url($row);
             $history_games[] = $row;
         }
     }
@@ -185,17 +194,25 @@ if (isset($_SESSION['user_id']) && count($user_fav_ids) > 0) {
     }
 }
 
+$recommended_games = [];
+if ($user_age !== null) {
+    foreach ($games as $g) {
+        $min_age = isset($g['min_age']) ? intval($g['min_age']) : 4;
+        $max_age = isset($g['max_age']) ? intval($g['max_age']) : 12;
+        if ($user_age >= $min_age && $user_age <= $max_age) {
+            $recommended_games[] = $g;
+        }
+    }
+}
+
 $today = date('Ymd');
 $this_week = date('YW');
 ?>
-=======
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
     <title>PlayLearn - Discover & Play</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -381,6 +398,43 @@ $this_week = date('YW');
             <?php endif; ?>
         </div>
     </section>
+
+    <?php if(count($recommended_games) > 0): ?>
+    <section class="max-w-7xl mx-auto px-6 mb-12">
+        <div class="flex items-end justify-between gap-4 mb-4 reveal-left">
+            <div>
+                <h2 class="text-2xl font-black text-primary"><i class="fas fa-compass text-blobPurple mr-2"></i> Recommended for Your Age</h2>
+                <p class="text-sm text-slate-400 font-bold mt-1">Picked automatically from your profile, with no extra setup needed.</p>
+            </div>
+            <?php if($user_age !== null): ?>
+                <span class="hidden sm:inline-flex bg-white border border-slate-200 shadow-sm text-slate-500 px-4 py-2 rounded-full text-xs font-black">Age <?php echo $user_age; ?></span>
+            <?php endif; ?>
+        </div>
+        <div class="track-wrapper reveal-up">
+            <button class="slide-btn slide-btn-left" onclick="slideLeft('track-age')"><i class="fas fa-chevron-left"></i></button>
+            <div id="track-age" class="swipe-track">
+                <?php foreach(array_slice($recommended_games, 0, 8) as $game): ?>
+                <div class="swipe-item w-[240px] sm:w-[280px]">
+                    <div class="game-card bg-white rounded-2xl overflow-hidden cursor-pointer border border-slate-100 shadow-sm relative group" onclick="openGameDetails(<?php echo $game['id']; ?>)">
+                        <div class="relative h-40 overflow-hidden bg-slate-100">
+                            <img src="<?php echo $game['image_url']; ?>" class="game-thumb w-full h-full object-cover">
+                            <div class="absolute top-3 left-3 bg-white/90 text-primary text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm">Ages <?php echo intval($game['min_age'] ?? 4); ?>-<?php echo intval($game['max_age'] ?? 12); ?></div>
+                            <div class="play-btn-overlay absolute inset-0 bg-primary/30 backdrop-blur-[2px] flex items-center justify-center">
+                                <div class="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center text-primary shadow-xl"><i class="fas fa-play text-sm"></i></div>
+                            </div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-base font-black text-primary truncate"><?php echo htmlspecialchars($game['level_name']); ?></h3>
+                            <p class="text-slate-400 text-xs font-semibold truncate"><?php echo htmlspecialchars($game['level_description']); ?></p>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <button class="slide-btn slide-btn-right" onclick="slideRight('track-age')"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </section>
+    <?php endif; ?>
 
     <section id="trending-section" class="max-w-7xl mx-auto px-6 mb-12">
         <h2 class="text-2xl font-black text-primary mb-4 reveal-left"><i class="fas fa-chart-line text-blobOrange mr-2"></i> Trending Now</h2>
@@ -941,7 +995,8 @@ $this_week = date('YW');
                     gamesData[gameId].is_fav = false;
                     showToast("Game removed from Favorites.");
                 }
-            }).catch(err => console.error(err));
+            }).catch(function() {
+            });
         }
 
         function claimQuestReward(btnElement, questKey, exp, ap) {
@@ -1148,197 +1203,5 @@ $this_week = date('YW');
             }
         }
     </script>
-=======
-    <title>PlayLearns - Challenge Your Mind</title>
-    <style>
-        :root {
-            --primary: #4A90E2;
-            --accent: #FF6B6B;
-            --text: #2D3436;
-            --bg: #FFFFFF;
-            --hero-bg: #1A3C6B; 
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background-color: var(--bg); color: var(--text); }
-
-        header {
-            background: #fff;
-            padding: 1rem 8%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #f0f0f0;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-        .logo { font-size: 1.6rem; font-weight: 800; color: var(--primary); text-decoration: none; }
-        .logo span { color: var(--accent); }
-        nav a { margin-left: 20px; text-decoration: none; color: var(--text); font-weight: 500; font-size: 0.9rem; }
-        .login-btn { background: var(--primary); color: white !important; padding: 6px 18px; border-radius: 8px; }
-
-        .hero {
-            height: 30vh;
-            background-color: var(--hero-bg);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-        .hero h1 { font-size: 3rem; font-weight: 800; margin-bottom: 10px; }
-        .hero p { opacity: 0.9; font-size: 1.1rem; }
-
-        .game-section { padding: 4rem 8%; }
-        .game-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 2.5rem;
-        }
-
-        .game-card {
-            background: #fff;
-            border-radius: 16px;
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            transition: transform 0.3s ease;
-            aspect-ratio: 1 / 1; 
-            cursor: pointer;
-        }
-        .game-card:hover { transform: translateY(-8px); box-shadow: 0 12px 24px rgba(0,0,0,0.15); }
-
-        .game-thumb {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
-        .game-card:hover .game-thumb { transform: scale(1.05); }
-
-        .game-info {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.98);
-            padding: 1rem 1.5rem;
-            z-index: 2;
-            height: 60px; 
-            transition: height 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .game-card:hover .game-info {
-            height: 140px; 
-        }
-
-        .game-info h3 {
-            font-size: 1.2rem;
-            color: #000;
-            margin-bottom: 15px; 
-            white-space: nowrap;
-        }
-
-        .game-info p {
-            font-size: 0.9rem;
-            color: #666;
-            line-height: 1.4;
-            opacity: 0; 
-            transition: opacity 0.3s ease;
-        }
-
-        .game-card:hover .game-info p {
-            opacity: 1; 
-        }
-
-        @media (max-width: 768px) {
-            .hero h1 { font-size: 2rem; }
-            nav { display: none; }
-        }
-    </style>
-</head>
-<body>
-
-    <header>
-        <a href="#" class="logo">Play<span>Learns</span></a>
-        <nav>
-            <a href="homepage.php">Home</a>
-            <a href="#">Games</a>
-            <a href="#">Leaderboard</a>
-            <a href="login.php" class="login-btn">Login</a> 
-        </nav>
-    </header>
-
-    <section class="hero">
-        <h1>Fun Way to Learn</h1>
-        <p>Ready to level up your brain?</p>
-    </section>
-
-    <main class="game-section">
-        <div class="game-grid">
-            
-            <div class="game-card" onclick="window.location.href='game2048.html'">
-                <img src="img/2048.png" alt="2048" class="game-thumb">
-                <div class="game-info">
-                    <h3>2048 Puzzle</h3>
-                    <p>Merge the numbers and get to the 2048 tile! A great way to practice powers of 2.</p>
-                </div>
-            </div>
-
-            <div class="game-card" onclick="window.location.href='minesweeper.html'">
-                <img src="img/扫雷.png" alt="Minesweeper" class="game-thumb">
-                <div class="game-info">
-                    <h3>Minesweeper</h3>
-                    <p>Use logic to clear the grid without detonating any mines. Classic brain training.</p>
-                </div>
-            </div>
-
-            <div class="game-card" onclick="window.location.href='snake.html'">
-                <img src="img/贪吃蛇.png" alt="Snake" class="game-thumb">
-                <div class="game-info">
-                    <h3>Classic Snake</h3>
-                    <p>Eat the food, grow longer, and don't hit the walls! Improves reaction and focus.</p>
-                </div>
-            </div>
-
-            <div class="game-card" onclick="window.location.href='word_wanderer.html'">
-                <img src="img/Word Wanderer.png" alt="Word Wanderer" class="game-thumb">
-                <div class="game-info">
-                    <h3>Word Wanderer</h3>
-                    <p>Connect letters to discover hidden words. Perfect for expanding your vocabulary.</p>
-                </div>
-            </div>
-
-            <div class="game-card" onclick="window.location.href='memory.html'">
-                <img src="img/match.jpeg" alt="Emoji Memory Match" class="game-thumb">
-                <div class="game-info">
-                    <h3>Emoji Memory Match</h3>
-                    <p>Train your brain by finding matching pairs of fun emojis! Great for boosting short-term memory and daily focus.</p>
-                </div>
-            </div>
-
-            <div class="game-card" onclick="window.location.href='math_pop.html'">
-                <img src="img/Math Pop.png" alt="Math Pop" class="game-thumb">
-                <div class="game-info">
-                    <h3>Math Pop</h3>
-                    <p>Solve the math puzzles by popping the correct bubbles. Great for practicing quick calculations.</p>
-                </div>
-            </div>
-
-            <div class="game-card" onclick="window.location.href='odd_one_out.html'">
-                <img src="https://api.dicebear.com/7.x/shapes/svg?seed=OddOneOut&backgroundColor=00cec9" alt="Odd One Out" class="game-thumb">
-                <div class="game-info">
-                    <h3>Odd One Out</h3>
-                    <p>Spot the difference! Find the emoji that doesn't belong to train your observation skills and focus.</p>
-                </div>
-            </div>
-        </div>
-    </main>
-
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
 </body>
 </html>

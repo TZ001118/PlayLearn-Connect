@@ -1,8 +1,13 @@
 <?php
+require_once __DIR__ . '/../includes/learning_helpers.php';
+pl_ensure_learning_schema($conn);
 // 1. 初始化变量，防止报错
 $total_points = 0;
 $total_games = 0;
 $active_days = 0;
+$streak_days = pl_streak_days($conn, $target_user_id);
+$avg_accuracy = null;
+$avg_reaction = null;
 $strengthCategory = "N/A";
 $childProfile = [
     'title' => "New Explorer",
@@ -22,6 +27,16 @@ $sql_days = "SELECT COUNT(DISTINCT DATE(played_at)) as days FROM game_scores WHE
 $res_days = $conn->query($sql_days);
 if ($res_days && $row = $res_days->fetch_assoc()) {
     $active_days = $row['days'] ?? 0;
+}
+
+$sql_quality = "SELECT AVG(CASE WHEN total_questions > 0 THEN (correct_answers / total_questions) * 100 END) AS avg_accuracy,
+                       AVG(reaction_time_ms) AS avg_reaction
+                FROM game_scores
+                WHERE user_id = $target_user_id";
+$res_quality = $conn->query($sql_quality);
+if ($res_quality && $row = $res_quality->fetch_assoc()) {
+    $avg_accuracy = $row['avg_accuracy'] !== null ? round($row['avg_accuracy']) : null;
+    $avg_reaction = $row['avg_reaction'] !== null ? round($row['avg_reaction']) : null;
 }
 
 // 4. 最强项分析
@@ -114,6 +129,7 @@ for ($i = 6; $i >= 0; $i--) {
             <div class="icon-box mb-3" style="background: rgba(74, 144, 226, 0.1); color: #4A90E2;"><i class="fas fa-calendar-check"></i></div>
             <h2 class="fw-bold mb-0" style="color: var(--primary-dark);"><?php echo $active_days; ?></h2>
             <p class="small fw-bold text-muted mb-0 text-uppercase tracking-wider">Practice Days</p>
+            <p class="small fw-bold mb-0 mt-1" style="color: var(--blob-purple);"><?php echo $streak_days; ?> day streak</p>
         </div>
     </div>
     <div class="col-md-3">
@@ -133,8 +149,8 @@ for ($i = 6; $i >= 0; $i--) {
     <div class="col-md-3">
         <div class="overview-card p-4 h-100 d-flex flex-column align-items-center justify-content-center text-center">
             <div class="icon-box mb-3" style="background: rgba(231, 76, 60, 0.1); color: #e74c3c;"><i class="fas fa-medal"></i></div>
-            <h2 class="fw-bold mb-0" style="color: var(--primary-dark); font-size: 20px;"><?php echo $strengthCategory; ?></h2>
-            <p class="small fw-bold text-muted mb-0 text-uppercase tracking-wider">Top Strength</p>
+            <h2 class="fw-bold mb-0" style="color: var(--primary-dark); font-size: 20px;"><?php echo $avg_accuracy !== null ? $avg_accuracy . '%' : $strengthCategory; ?></h2>
+            <p class="small fw-bold text-muted mb-0 text-uppercase tracking-wider"><?php echo $avg_accuracy !== null ? 'Avg Accuracy' : 'Top Strength'; ?></p>
         </div>
     </div>
 </div>

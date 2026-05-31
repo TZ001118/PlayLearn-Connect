@@ -4,7 +4,8 @@ require 'db_conn.php';
 
 // 1. Validate arguments from URL
 $game_id = isset($_GET['game_id']) ? intval($_GET['game_id']) : 0;
-$initial_role = isset($_GET['role']) ? $_GET['role'] : 'student'; // 'student' or 'parent'
+$initial_role = isset($_GET['role']) ? $_GET['role'] : 'student';
+$initial_role = ($initial_role === 'parent') ? 'parent' : 'student';
 
 if ($game_id === 0) {
     die("Invalid Game Session.");
@@ -31,12 +32,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $user_id = intval($_SESSION['user_id']);
         $username = $_SESSION['username'];
-        $form_role = $_POST['form_role']; // 'student' or 'parent'
+        $form_role = $_POST['form_role'] ?? 'student';
         $rating = floatval($_POST['rating']);
         $comment = trim($_POST['comment']);
 
         // Double check permissions to prevent hacking
-        if (($form_role === 'student' && $_SESSION['role'] !== 'player') || 
+        if (!in_array($form_role, ['student', 'parent'], true)) {
+            $error_msg = "Invalid review type.";
+        } elseif (($form_role === 'student' && $_SESSION['role'] !== 'player') || 
             ($form_role === 'parent' && $_SESSION['role'] !== 'parent')) {
             $error_msg = "Unauthorized submission: Action does not match your account type.";
         } elseif ($rating < 1 || $rating > 5 || empty($comment)) {
@@ -55,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 // Insert brand new review
                 $insert_stmt = $conn->prepare("INSERT INTO game_reviews (game_id, user_id, username, rating_type, rating_score, comment_text) VALUES (?, ?, ?, ?, ?, ?)");
-                $insert_stmt->bind_param("iisdds", $game_id, $user_id, $username, $form_role, $rating, $comment);
+                $insert_stmt->bind_param("iissds", $game_id, $user_id, $username, $form_role, $rating, $comment);
                 $insert_stmt->execute();
             }
             $submit_success = true;
@@ -77,7 +80,7 @@ $review_res = $review_stmt->get_result();
 while($row = $review_res->fetch_assoc()) {
     if ($row['rating_type'] === 'student') {
         $student_reviews[] = $row;
-    } else {
+    } elseif ($row['rating_type'] === 'parent') {
         $parent_reviews[] = $row;
     }
 }

@@ -1,0 +1,5 @@
+process_upload_game_package.php
+admin_games.php
+README.md
+README for group.md
+developer_game_template/GAME_TEMPLATE_GUIDE.md

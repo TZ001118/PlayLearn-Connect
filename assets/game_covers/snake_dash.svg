@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="640" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1FFF3"/>
+      <stop offset="1" stop-color="#FFF4D9"/>
+    </linearGradient>
+    <filter id="s"><feDropShadow dx="0" dy="14" stdDeviation="12" flood-color="#00B894" flood-opacity=".24"/></filter>
+  </defs>
+  <rect width="640" height="420" rx="40" fill="url(#bg)"/>
+  <g filter="url(#s)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M144 282h120v-84h124v-78h94" stroke="#00B894" stroke-width="42"/>
+    <path d="M144 282h120v-84h124v-78h94" stroke="#55E6B5" stroke-width="20"/>
+  </g>
+  <circle cx="496" cy="120" r="28" fill="#00B894"/>
+  <circle cx="504" cy="111" r="5" fill="#fff"/>
+  <circle cx="514" cy="128" r="5" fill="#fff"/>
+  <circle cx="174" cy="250" r="14" fill="#FF7675"/>
+  <text x="42" y="76" font-family="Nunito, Arial, sans-serif" font-size="34" font-weight="900" fill="#008A70">SNAKE DASH</text>
+</svg>

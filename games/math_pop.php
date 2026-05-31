@@ -217,6 +217,11 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
         let targetScore = 0;
         let correctAnswer = 0;
         let isProcessing = false;
+        let totalQuestions = 0;
+        let correctAnswers = 0;
+        let reactionSamples = [];
+        let questionStartedAt = Date.now();
+        let gameStartedAt = Date.now();
 
         function showTutorial() {
             document.getElementById('tutorial-overlay').style.display = 'flex';
@@ -235,6 +240,10 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
             currentScore = 0;
             targetScore = lvlConfig.winScore;
             isProcessing = false;
+            totalQuestions = 0;
+            correctAnswers = 0;
+            reactionSamples = [];
+            gameStartedAt = Date.now();
 
             document.getElementById('level-title').innerText = `LEVEL ${lvlConfig.level}`;
             updateScore();
@@ -282,6 +291,7 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
 
             const choicesDiv = document.getElementById('choices');
             choicesDiv.innerHTML = '';
+            questionStartedAt = Date.now();
             
             for (let i = 0; i < 4; i++) {
                 let btn = document.createElement('button');
@@ -295,13 +305,16 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
         function checkAnswer(selectedVal, btnElement) {
             if (isProcessing) return;
             isProcessing = true;
+            totalQuestions++;
+            reactionSamples.push(Date.now() - questionStartedAt);
 
             if (selectedVal === correctAnswer) {
                 btnElement.classList.add('correct');
                 currentScore++;
+                correctAnswers++;
                 updateScore();
                 
-                setTimeout(() => {
+                setTimeout(function() {
                     if (currentScore >= targetScore) {
                         showGameOver(true);
                     } else {
@@ -311,7 +324,7 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
                 }, 400);
             } else {
                 btnElement.classList.add('wrong');
-                setTimeout(() => {
+                setTimeout(function() {
                     showGameOver(false);
                 }, 500);
             }
@@ -333,9 +346,18 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
                 body: JSON.stringify({ 
                     game_name: 'Math Pop', 
                     score: currentScore,
-                    level_reached: currentLevelIndex + 1
+                    level_reached: currentLevelIndex + 1,
+                    correct_answers: correctAnswers,
+                    total_questions: totalQuestions,
+                    reaction_time_ms: reactionSamples.length ? Math.round(reactionSamples.reduce(function(a, b) {
+                        return a + b;
+                    }, 0) / reactionSamples.length) : null,
+                    duration_seconds: Math.max(1, Math.round((Date.now() - gameStartedAt) / 1000))
                 })
-            }).then(r => r.json()).then(d => console.log(d));
+            }).then(function(response) {
+                return response.json();
+            }).then(function() {
+            });
 
             if(isWin) {
                 icon.innerText = "🎉";

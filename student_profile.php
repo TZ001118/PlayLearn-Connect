@@ -2,6 +2,19 @@
 session_start();
 require 'db_conn.php'; 
 include('maintenance_check.php');
+require_once 'includes/learning_helpers.php';
+pl_ensure_learning_schema($conn);
+
+function pl_avatar_frames() {
+    return [
+        ['name' => 'Star Burst', 'path' => 'assets/avatar_frames/star_burst.svg', 'theme' => 'Bright confidence'],
+        ['name' => 'Forest Leaf', 'path' => 'assets/avatar_frames/forest_leaf.svg', 'theme' => 'Calm growth'],
+        ['name' => 'Ocean Wave', 'path' => 'assets/avatar_frames/ocean_wave.svg', 'theme' => 'Cool focus'],
+        ['name' => 'Rainbow Pop', 'path' => 'assets/avatar_frames/rainbow_pop.svg', 'theme' => 'Playful energy'],
+        ['name' => 'Cosmic Ring', 'path' => 'assets/avatar_frames/cosmic_ring.svg', 'theme' => 'Space explorer'],
+        ['name' => 'Crown Champ', 'path' => 'assets/avatar_frames/crown_champ.svg', 'theme' => 'Achievement shine'],
+    ];
+}
 // =================================================================================
 // 1. AJAX HANDLERS (MUST BE AT THE TOP)
 // =================================================================================
@@ -40,14 +53,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         exit;
     }
 
-    // --- Action 2: Update Profile (Gender & Birthday) ---
+    if ($_POST['action'] === 'set_avatar_frame') {
+        $frame = trim($_POST['frame'] ?? '');
+        $allowed_frames = array_column(pl_avatar_frames(), 'path');
+
+        if ($frame !== '' && !in_array($frame, $allowed_frames, true)) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid frame selected.']);
+            exit;
+        }
+
+        $frame_value = $frame === '' ? null : $frame;
+        $stmt = $conn->prepare("UPDATE users SET avatar_frame = ? WHERE id = ?");
+        $stmt->bind_param("si", $frame_value, $user_id);
+        if ($stmt->execute()) {
+            echo json_encode(['status' => 'success', 'frame' => $frame]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Frame update failed.']);
+        }
+        exit;
+    }
+
+    // --- Action 2: Update Profile ---
     if ($_POST['action'] === 'update_profile') {
         $gender = trim($_POST['gender'] ?? '');
-        $birthday = trim($_POST['birthday'] ?? '');
-        if (empty($birthday)) $birthday = NULL;
 
-        $stmt = $conn->prepare("UPDATE users SET gender = ?, birthday = ? WHERE id = ?");
-        $stmt->bind_param("ssi", $gender, $birthday, $user_id);
+        $stmt = $conn->prepare("UPDATE users SET gender = ? WHERE id = ?");
+        $stmt->bind_param("si", $gender, $user_id);
         if ($stmt->execute()) {
             echo json_encode(['status' => 'success']);
         } else {
@@ -116,11 +147,12 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'player') {
 $user_id = intval($_SESSION['user_id']);
 
 // 3. Fetch user details
-$sql = "SELECT username, email, link_code, profile_image, avatar_frame, level, total_exp, title, title_expires_at, gender, birthday, created_at FROM users WHERE id = ?";
+$sql = "SELECT username, email, link_code, profile_image, avatar_frame, level, total_exp, title, title_expires_at, gender, birthday, ic_number, created_at FROM users WHERE id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
+$avatar_frames = pl_avatar_frames();
 
 // 4. Linking code logic
 $my_code = $user['link_code'] ?? "";
@@ -144,6 +176,17 @@ $h_stmt = $conn->prepare($history_sql);
 $h_stmt->bind_param("i", $user_id);
 $h_stmt->execute();
 $history_res = $h_stmt->get_result();
+
+$skills = pl_skill_definitions();
+$target_sql = "SELECT plt.skill_key, plt.target_value, plt.note, plt.due_date, p.username AS parent_name
+               FROM parent_learning_targets plt
+               JOIN users p ON p.id = plt.parent_id
+               WHERE plt.child_id = ? AND plt.status = 'active'
+               ORDER BY plt.updated_at DESC";
+$target_stmt = $conn->prepare($target_sql);
+$target_stmt->bind_param("i", $user_id);
+$target_stmt->execute();
+$target_res = $target_stmt->get_result();
 
 // 7. Calculate Gamification Data
 $current_level = isset($user['level']) && $user['level'] > 0 ? intval($user['level']) : 1;
@@ -225,7 +268,38 @@ if (!empty($user['title'])) {
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
 
-        .avatar-frame { position: absolute; top: -15px; left: -15px; right: -15px; bottom: -15px; pointer-events: none; z-index: 15; }
+        .avatar-frame { position: absolute; top: -15px; left: -15px; width: 150px; height: 150px; max-width: none; pointer-events: none; z-index: 15; }
+        .frame-choice {
+            border: 2px solid #e2e8f0;
+            background: #fff;
+            border-radius: 22px;
+            padding: 14px;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .frame-choice:hover { transform: translateY(-3px); border-color: #6C3FF5; box-shadow: 0 12px 26px rgba(108, 63, 245, 0.12); }
+        .frame-choice.active { border-color: #6C3FF5; box-shadow: 0 0 0 4px rgba(108, 63, 245, 0.12); }
+        .frame-preview {
+            width: 86px;
+            height: 86px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #6C3FF5, #FF9B6B);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 900;
+            font-size: 1.8rem;
+            margin: 0 auto 12px;
+        }
+        .frame-preview img {
+            position: absolute;
+            width: 118px;
+            height: 118px;
+            max-width: none;
+            pointer-events: none;
+        }
 
         .avatar-hover-overlay {
             position: absolute; inset: 0; background: rgba(0,0,0,0.5); border-radius: 50%; 
@@ -338,6 +412,13 @@ if (!empty($user['title'])) {
                             </button>
                         </div>
 
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4">
+                            <p class="text-[10px] font-black text-slate-400 uppercase">IC / ID Number</p>
+                            <p class="text-sm font-bold text-slate-700">
+                                <?= !empty($user['ic_number']) ? htmlspecialchars($user['ic_number']) : '<span class="text-slate-400 italic">Not set</span>' ?>
+                            </p>
+                        </div>
+
                         <button onclick="openSecurityModal()" class="w-full mb-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-full transition-all flex items-center justify-center gap-2 shadow-sm border border-slate-200">
                             <i class="fas fa-shield-alt text-blobPurple"></i> Account Security
                         </button>
@@ -386,6 +467,53 @@ if (!empty($user['title'])) {
                     </div>
 
                     <div class="bg-white rounded-[2rem] p-8 shadow-xl border border-slate-100 reveal-up" style="animation-delay: 0.1s;">
+                        <div class="mb-8 bg-gradient-to-br from-blobPurple/10 to-blobOrange/10 rounded-[1.75rem] p-6 border border-blobPurple/10">
+                            <div class="flex items-center justify-between gap-4 mb-5">
+                                <div>
+                                    <h3 class="text-2xl font-black text-primary flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-white text-blobPurple rounded-xl flex items-center justify-center shadow-sm"><i class="fas fa-bullseye"></i></div>
+                                        Parent Focus Goals
+                                    </h3>
+                                    <p class="text-sm font-bold text-slate-500 mt-1">These are the learning areas your parent wants you to focus on.</p>
+                                </div>
+                            </div>
+
+                            <?php if($target_res && $target_res->num_rows > 0): ?>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <?php while($target = $target_res->fetch_assoc()): 
+                                        $skill = $skills[$target['skill_key']] ?? ['label' => ucfirst($target['skill_key']), 'icon' => 'fa-star', 'color' => '#6C3FF5'];
+                                    ?>
+                                        <div class="bg-white rounded-2xl p-4 border border-white/70 shadow-sm">
+                                            <div class="flex items-start gap-3">
+                                                <div class="w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-sm" style="background: <?= htmlspecialchars($skill['color']) ?>;">
+                                                    <i class="fas <?= htmlspecialchars($skill['icon']) ?>"></i>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <div class="flex items-center justify-between gap-3">
+                                                        <h4 class="font-black text-primary"><?= htmlspecialchars($skill['label']) ?></h4>
+                                                        <span class="text-xs font-black text-blobPurple bg-blobPurple/10 px-3 py-1 rounded-full"><?= intval($target['target_value']) ?>%</span>
+                                                    </div>
+                                                    <p class="text-xs font-bold text-slate-400 mt-1">Set by <?= htmlspecialchars($target['parent_name']) ?></p>
+                                                    <?php if(!empty($target['note'])): ?>
+                                                        <p class="text-sm font-bold text-slate-600 mt-3"><?= htmlspecialchars($target['note']) ?></p>
+                                                    <?php endif; ?>
+                                                    <?php if(!empty($target['due_date'])): ?>
+                                                        <p class="text-xs font-black text-blobOrange mt-3"><i class="far fa-calendar-alt mr-1"></i>Goal date: <?= date('M d, Y', strtotime($target['due_date'])) ?></p>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endwhile; ?>
+                                </div>
+                            <?php else: ?>
+                                <div class="bg-white/80 rounded-2xl p-5 border border-white text-center">
+                                    <div class="w-14 h-14 bg-white text-slate-300 rounded-full flex items-center justify-center text-2xl mx-auto mb-3"><i class="fas fa-seedling"></i></div>
+                                    <p class="font-black text-primary">No parent focus goals yet</p>
+                                    <p class="text-sm font-bold text-slate-400 mt-1">When your parent sets a focus area, it will appear here.</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+
                         <div class="flex items-center justify-between mb-8 border-b border-slate-100 pb-4">
                             <div>
                                 <h3 class="text-2xl font-black text-primary flex items-center gap-3">
@@ -501,8 +629,11 @@ if (!empty($user['title'])) {
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="fas fa-birthday-cake text-blobOrange opacity-70"></i>
                     </div>
-                    <input type="text" id="editBirthday" placeholder="Select your birthday..." value="<?= htmlspecialchars($user['birthday'] ?? '') ?>" class="w-full bg-slate-50 border-2 border-slate-100 text-slate-700 rounded-xl pl-11 pr-4 py-3 outline-none focus:border-blobOrange focus:bg-white transition-all font-bold shadow-sm cursor-pointer">
+                    <div class="w-full bg-slate-50 border-2 border-slate-100 text-slate-700 rounded-xl pl-11 pr-4 py-3 font-bold shadow-sm">
+                        <?= !empty($user['birthday']) ? date('M d, Y', strtotime($user['birthday'])) : 'Not set' ?>
+                    </div>
                 </div>
+                <p class="text-xs font-bold text-slate-400 mt-2">Birthday is locked after account creation.</p>
             </div>
             
             <button id="saveProfileBtn" onclick="saveProfile()" class="w-full bg-blobPurple hover:bg-blobPurple/90 text-white font-black py-3.5 rounded-xl transition-all hover:-translate-y-1 shadow-lg shadow-blobPurple/30 flex justify-center items-center gap-2">
@@ -524,7 +655,7 @@ if (!empty($user['title'])) {
         </div>
     </div>
 
-    <div id="frameModal" class="global-modal-overlay">
+    <div id="frameModalLegacy" class="global-modal-overlay hidden">
         <div class="global-modal-card">
             <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-4">
                 <h4 class="text-xl font-black text-primary mb-0"><i class="fas fa-crown text-yellow-500 me-2"></i>Avatar Frames</h4>
@@ -544,6 +675,39 @@ if (!empty($user['title'])) {
         </div>
     </div>
     
+    <div id="frameModal" class="global-modal-overlay">
+        <div class="global-modal-card">
+            <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-4">
+                <h4 class="text-xl font-black text-primary mb-0"><i class="fas fa-crown text-yellow-500 me-2"></i>Avatar Frames</h4>
+                <button onclick="closeFrameModal()" class="w-8 h-8 bg-slate-100 hover:bg-red-500 hover:text-white rounded-full flex items-center justify-center transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p class="text-slate-500 text-sm text-left font-bold mb-4">Choose a decorative frame for your profile, leaderboard, and parent dashboard avatar.</p>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 my-6">
+                <?php foreach ($avatar_frames as $frame): ?>
+                    <button
+                        type="button"
+                        class="frame-choice <?= ($user['avatar_frame'] ?? '') === $frame['path'] ? 'active' : '' ?>"
+                        data-frame="<?= htmlspecialchars($frame['path']) ?>"
+                        onclick="selectAvatarFrame('<?= htmlspecialchars($frame['path'], ENT_QUOTES) ?>')"
+                    >
+                        <div class="frame-preview">
+                            <?= strtoupper(substr($user['username'], 0, 1)); ?>
+                            <img src="<?= htmlspecialchars($frame['path']) ?>" alt="<?= htmlspecialchars($frame['name']) ?>">
+                        </div>
+                        <div class="font-black text-primary text-sm"><?= htmlspecialchars($frame['name']) ?></div>
+                        <div class="text-[10px] font-bold text-slate-400"><?= htmlspecialchars($frame['theme']) ?></div>
+                    </button>
+                <?php endforeach; ?>
+            </div>
+            <div class="pt-4 border-t border-slate-100 flex gap-3 justify-end">
+                <button class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-5 py-2 rounded-full text-sm font-black transition-colors" onclick="selectAvatarFrame('')">Clear Frame</button>
+                <button class="bg-primary hover:bg-slate-800 text-white px-6 py-2 rounded-full text-sm font-black transition-colors" onclick="closeFrameModal()">Done</button>
+            </div>
+        </div>
+    </div>
+
     <div id="logoutModal" class="global-modal-overlay">
         <div class="global-modal-card text-center">
             <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4 shadow-sm border border-red-100">
@@ -662,19 +826,14 @@ if (!empty($user['title'])) {
             const btn = document.getElementById('saveProfileBtn');
             // 获取选中的性别 Radio Button 的值
             const gender = document.querySelector('input[name="genderOptions"]:checked')?.value || '';
-            const birthday = document.getElementById('editBirthday').value;
             
             btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...'; btn.disabled = true;
 
-            let fd = new FormData(); fd.append('action', 'update_profile'); fd.append('gender', gender); fd.append('birthday', birthday);
+            let fd = new FormData(); fd.append('action', 'update_profile'); fd.append('gender', gender);
             fetch('student_profile.php', { method: 'POST', body: fd })
             .then(r => r.json()).then(data => {
                 if(data.status === 'success') {
                     document.getElementById('displayGender').innerText = gender ? (gender.charAt(0).toUpperCase() + gender.slice(1)) : 'Not set';
-                    if (birthday) {
-                        const d = new Date(birthday);
-                        document.getElementById('displayBirthday').innerText = d.toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
-                    } else document.getElementById('displayBirthday').innerHTML = '<span class="text-slate-400 italic">Not set</span>';
                     showToast('Profile updated!', 'success');
                     closeProfileModal();
                 } else showToast('Error updating profile', 'error');
@@ -747,6 +906,29 @@ if (!empty($user['title'])) {
         const frameModal = document.getElementById('frameModal');
         function openFrameModal() { frameModal.classList.add('active'); document.body.style.overflow = 'hidden'; }
         function closeFrameModal() { frameModal.classList.remove('active'); document.body.style.overflow = 'auto'; }
+        function selectAvatarFrame(framePath) {
+            const fd = new FormData();
+            fd.append('action', 'set_avatar_frame');
+            fd.append('frame', framePath);
+
+            fetch('student_profile.php', { method: 'POST', body: fd })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status !== 'success') {
+                    showToast(data.message || 'Frame update failed.', 'error');
+                    return;
+                }
+
+                document.querySelectorAll('.frame-choice').forEach(choice => {
+                    choice.classList.toggle('active', choice.dataset.frame === framePath);
+                });
+
+                const frameBox = document.getElementById('frameOverlayContainer');
+                frameBox.innerHTML = framePath ? `<img src="${framePath}" class="avatar-frame" alt="Frame">` : '';
+                showToast(framePath ? 'Avatar frame equipped!' : 'Avatar frame cleared!', 'success');
+            })
+            .catch(() => showToast('Frame update failed.', 'error'));
+        }
         // --- Logout 弹窗逻辑 ---
         const logoutModal = document.getElementById('logoutModal');
         function openLogoutModal() { logoutModal.classList.add('active'); document.body.style.overflow = 'hidden'; }
@@ -755,13 +937,6 @@ if (!empty($user['title'])) {
         // --- Flatpickr 初始化 & 页面滚动动画 ---
         document.addEventListener('DOMContentLoaded', () => {
             // 激活漂亮的 Flatpickr 日历
-            flatpickr("#editBirthday", {
-                dateFormat: "Y-m-d",
-                maxDate: "today",
-                disableMobile: true,
-                animate: true
-            });
-
             // 导航栏滚动效果
             const nav = document.getElementById('mainNav');
             window.addEventListener('scroll', () => {

@@ -27,7 +27,7 @@ if ($u && $u['status'] === 'banned') {
 $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_id']);
 ?>
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -68,6 +68,19 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
             transition: transform 0.2s;
         }
         .back-btn:hover { transform: scale(1.05); }
+        .help-btn {
+            padding: 10px 16px;
+            background-color: #2d3436;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: 900;
+            box-shadow: 0 4px 10px rgba(45, 52, 54, 0.18);
+            transition: transform 0.2s;
+        }
+        .help-btn:hover { transform: scale(1.05); }
 
         .brand-title {
             font-size: 38px; 
@@ -237,6 +250,67 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
             background-color: #d1d8e0;
         }
         .btnc svg { width: 34px; height: 34px; }
+        .tutorial-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+        .tutorial-card {
+            background: #fff;
+            padding: 32px;
+            border-radius: 24px;
+            max-width: 420px;
+            width: 85%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            border: 4px solid #bbada0;
+        }
+        .tutorial-card h2 {
+            margin: 0 0 22px;
+            color: #776e65;
+            text-align: center;
+            font-size: 30px;
+            font-weight: 900;
+        }
+        .tutorial-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+            background: #f4f6f9;
+            padding: 14px;
+            border-radius: 16px;
+            color: #636e72;
+            font-weight: 800;
+            line-height: 1.35;
+        }
+        .tutorial-step span {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 50%;
+            background: #8f7a66;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+        }
+        .tutorial-card button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 16px;
+            background: #8f7a66;
+            color: white;
+            font-size: 20px;
+            font-weight: 900;
+            cursor: pointer;
+            margin-top: 8px;
+        }
 
     </style>
 </head>
@@ -245,7 +319,7 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
     <div class="header">
         <button class="back-btn" onclick="window.history.back()">⬅ BACK</button>
         <div class="brand-title">Play<span>Learn</span></div>
-        <div style="width: 80px;"></div> 
+        <button class="help-btn" onclick="showTutorial()">Help</button>
     </div>
 
     <div class="game-wrapper">
@@ -308,7 +382,39 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
 
     </div>
 
+    <div id="tutorialOverlay" class="tutorial-overlay">
+        <div class="tutorial-card">
+            <h2>How to Play</h2>
+            <div class="tutorial-step"><span>1</span><div>Use the arrow buttons or keyboard arrows to slide all tiles in one direction.</div></div>
+            <div class="tutorial-step"><span>2</span><div>When two matching numbers touch, they merge into a bigger number and increase your score.</div></div>
+            <div class="tutorial-step"><span>3</span><div>Plan ahead to keep empty spaces open. This trains Math, Logic, and Focus skills.</div></div>
+            <button onclick="hideTutorial()">Start Playing</button>
+        </div>
+    </div>
+
     <script>
+        const tutorialKey = 'playlearn_2048_tutorial_seen';
+        function showTutorial() {
+            document.getElementById('tutorialOverlay').style.display = 'flex';
+        }
+        function hideTutorial() {
+            document.getElementById('tutorialOverlay').style.display = 'none';
+            try {
+                localStorage.setItem(tutorialKey, '1');
+            } catch (error) {
+                console.warn('Tutorial preference could not be saved.');
+            }
+        }
+        window.addEventListener('DOMContentLoaded', function() {
+            try {
+                if (localStorage.getItem(tutorialKey) !== '1') {
+                    setTimeout(showTutorial, 400);
+                }
+            } catch (error) {
+                setTimeout(showTutorial, 400);
+            }
+        });
+
         let score = 0;
         let line = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
         let line_checksame = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
@@ -495,9 +601,13 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
                         level_reached: 1 // 2048 没有关卡，默认写 1
                     })
                 })
-                .then(response => response.json())
-                .then(data => console.log("Score saved:", data))
-                .catch(error => console.error('Upload Error:', error));
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function() {
+                })
+                .catch(function() {
+                });
             }
         }
     }

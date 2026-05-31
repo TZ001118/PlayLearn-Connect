@@ -244,6 +244,9 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
         let useropen1 = [];
         let grid_letters = [];
         let current_slot_index = 0;
+        let attempts = 0;
+        let correctAnswers = 0;
+        let levelStartedAt = Date.now();
 
         function showTutorial() {
             document.getElementById('tutorial-overlay').style.display = 'flex';
@@ -263,6 +266,9 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
             size_game = lvlConfig.cols * lvlConfig.rows;
             useropen1 = Array(word_target.length).fill("");
             current_slot_index = 0;
+            attempts = 0;
+            correctAnswers = 0;
+            levelStartedAt = Date.now();
 
             document.getElementById('level-title').innerText = `LEVEL ${lvlConfig.level}`;
             document.getElementById('hint-emoji').innerText = lvlConfig.hint;
@@ -341,7 +347,9 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
 
         function checkWord() {
             let spelled = useropen1.join("");
+            attempts++;
             if (spelled === word_target) {
+                correctAnswers = 1;
                 showGameOver(true);
             } else {
                 showGameOver(false);
@@ -360,9 +368,16 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
                 body: JSON.stringify({ 
                     game_name: 'Word Wanderer', // 名字按你后台设定的填
                     score: 100, // 过关固定给 100 分
-                    level_reached: currentLevelIndex + 1 
+                    level_reached: currentLevelIndex + 1,
+                    correct_answers: correctAnswers,
+                    total_questions: attempts,
+                    duration_seconds: Math.max(1, Math.round((Date.now() - levelStartedAt) / 1000)),
+                    score: isWin ? 100 : 0
                 })
-            }).then(r=>r.json()).then(d=>console.log(d));
+            }).then(function(response) {
+                return response.json();
+            }).then(function() {
+            });
 
             if(isWin) {
                 icon.innerText = "🎉";
@@ -395,8 +410,11 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams(data)
             })
-            .then(res => res.json())
-            .then(data => console.log("Success:", data));
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function() {
+            });
         }
 
         function nextAction() {

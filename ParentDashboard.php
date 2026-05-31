@@ -2,6 +2,8 @@
 session_start();
 require('db_conn.php'); 
 include('maintenance_check.php');
+require_once 'includes/learning_helpers.php';
+pl_ensure_learning_schema($conn);
 // 1. 安全检查
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -206,7 +208,7 @@ $page = $_GET['page'] ?? 'overview';
             <a href="?page=radar<?php echo $is_linked ? "&child_id=$active_child_id" : ""; ?>" class="nav-link <?= $page=='radar'?'active':'' ?>"><i class="fas fa-bullseye"></i> Skill Radar</a>
             <a href="?page=history<?php echo $is_linked ? "&child_id=$active_child_id" : ""; ?>" class="nav-link <?= $page=='history'?'active':'' ?>"><i class="fas fa-history"></i> History Log</a>
             <a href="?page=goals<?php echo $is_linked ? "&child_id=$active_child_id" : ""; ?>" class="nav-link <?= $page=='goals'?'active':'' ?>"><i class="fas fa-tasks"></i> Learning Goals</a>
-            <a href="?page=students<?php echo $is_linked ? "&child_id=$active_child_id" : ""; ?>" class="nav-link <?= $page=='students'?'active':'' ?>"><i class="fas fa-user-friends"></i> Students List</a>
+            <a href="?page=students<?php echo $is_linked ? "&child_id=$active_child_id" : ""; ?>" class="nav-link <?= $page=='students'?'active':'' ?>"><i class="fas fa-user-friends"></i> Children</a>
             <a href="?page=settings" class="nav-link <?= $page=='settings'?'active':'' ?>"><i class="fas fa-cog"></i> Settings</a>
         </div>
     </nav>

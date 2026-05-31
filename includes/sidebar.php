@@ -1,10 +1,8 @@
 <?php
-// includes/sidebar.php 顶部逻辑：用于同步全系统的 Dark/Light Mode
 if (isset($_SESSION['user_id'])) {
-    $sid = $_SESSION['user_id'];
-    // 获取当前管理员的主题偏好
+    $sid = intval($_SESSION['user_id']);
     $pref_res = $conn->query("SELECT theme_preference FROM users WHERE id = $sid");
-    $pref_data = $pref_res->fetch_assoc();
+    $pref_data = $pref_res ? $pref_res->fetch_assoc() : null;
     $saved_theme = $pref_data['theme_preference'] ?? 'dark';
 }
 ?>
@@ -32,6 +30,9 @@ if (isset($_SESSION['user_id'])) {
         <a href="admin_scores.php" class="menu-item <?php echo ($current_page == 'scores') ? 'active' : ''; ?>">
             <i class="fas fa-trophy"></i> Player Scores
         </a>
+        <a href="admin_reviews.php" class="menu-item <?php echo ($current_page == 'reviews') ? 'active' : ''; ?>">
+            <i class="fas fa-comments"></i> Reviews
+        </a>
 
         <div style="margin-top: 15px; padding: 0 25px; font-size: 10px; color: var(--text-gray); letter-spacing: 1px; font-weight: bold;">SYSTEM & SAFETY</div>
         
@@ -42,7 +43,6 @@ if (isset($_SESSION['user_id'])) {
         <a href="admin_profile.php" class="menu-item <?php echo ($current_page == 'profile') ? 'active' : ''; ?>">
             <i class="fas fa-user-cog"></i> Admin Settings
         </a>
-        
     </div>
 
     <a href="logout.php" class="menu-item" style="border-top: 1px solid var(--border-color); margin-top: auto;">

@@ -13,7 +13,7 @@ $current_username = $parent_data['username'] ?? '';
 <div class="container-fluid px-0">
     <div class="mb-4">
         <h3 class="fw-bold text-dark mb-1">Account Settings</h3>
-        <p class="text-muted small">Manage your personal profile and linked student accounts.</p>
+        <p class="text-muted small">Manage your personal profile and linked child accounts.</p>
     </div>
 
     <?php if ($status === 'link_success'): ?>
@@ -35,6 +35,31 @@ $current_username = $parent_data['username'] ?? '';
         <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center" style="background-color: #d1e7dd; color: #0f5132;">
             <i class="fas fa-trash-check fs-4 me-3"></i> 
             <div><strong>History Cleared!</strong> All game records have been permanently deleted.</div>
+        </div>
+    <?php elseif ($status === 'child_created'): ?>
+        <div class="alert alert-success border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center">
+            <i class="fas fa-check-circle fs-4 me-3"></i>
+            <div><strong>Child account created!</strong> The account is already linked to your dashboard.</div>
+        </div>
+    <?php elseif ($status === 'child_age_invalid'): ?>
+        <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center">
+            <i class="fas fa-times-circle fs-4 me-3"></i>
+            <div>Child accounts are limited to ages 4 to 12.</div>
+        </div>
+    <?php elseif ($status === 'child_password_invalid'): ?>
+        <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center">
+            <i class="fas fa-times-circle fs-4 me-3"></i>
+            <div>Password must be 8 to 200 characters and include an uppercase letter plus a number.</div>
+        </div>
+    <?php elseif ($status === 'child_duplicate'): ?>
+        <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center">
+            <i class="fas fa-times-circle fs-4 me-3"></i>
+            <div>This child username is already taken.</div>
+        </div>
+    <?php elseif ($status === 'child_missing_fields'): ?>
+        <div class="alert alert-danger border-0 shadow-sm rounded-4 mb-4 d-flex align-items-center">
+            <i class="fas fa-times-circle fs-4 me-3"></i>
+            <div>Please fill in the child username, IC, password, and birthday.</div>
         </div>
     <?php endif; ?>
 
@@ -74,6 +99,51 @@ $current_username = $parent_data['username'] ?? '';
                     </div>
                     <small id="emailStatusMsg" class="mt-2 d-block fw-bold"></small>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: linear-gradient(145deg, #fff7ed 0%, #ffffff 100%); border-left: 5px solid var(--blob-orange, #FF9B6B) !important;">
+        <div class="card-body p-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between gap-4">
+                <div class="flex-grow-1">
+                    <h5 class="fw-bold text-dark mb-2">
+                        <i class="fas fa-child me-2" style="color: var(--blob-orange, #FF9B6B);"></i> Create Child Account
+                    </h5>
+                    <p class="small text-muted mb-0">Create a child login from the parent dashboard. The new account is linked automatically and is limited to ages 4 to 12.</p>
+                </div>
+                <form action="process_create_child.php" method="POST" class="flex-grow-1" style="max-width: 560px;">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <input type="text" name="child_username" class="form-control fw-bold" placeholder="Child username" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="password" name="child_password" class="form-control fw-bold" placeholder="Password" required>
+                        </div>
+                        <div class="col-md-12">
+                            <input type="text" name="child_ic" class="form-control fw-bold" placeholder="Child IC / ID number" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" name="child_month" min="1" max="12" class="form-control" placeholder="Month" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" name="child_day" min="1" max="31" class="form-control" placeholder="Day" required>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" name="child_year" min="<?php echo date('Y') - 12; ?>" max="<?php echo date('Y') - 4; ?>" class="form-control" placeholder="Year" required>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="child_gender" class="form-select">
+                                <option value="">Gender</option>
+                                <option value="girl">Girl</option>
+                                <option value="boy">Boy</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary w-100 fw-bold">Create and Link Child</button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

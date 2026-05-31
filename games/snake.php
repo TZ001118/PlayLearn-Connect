@@ -334,7 +334,7 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
         }
 
         function startGameLoop() {
-            gameInterval = setInterval(() => {
+            gameInterval = setInterval(function() {
                 let oldHead = snake[snake.length - 1];
 
                 if(currentDirection === 'up') up();
@@ -393,7 +393,9 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
 
         function foodlocation() {
             let food_bool = size_s.includes(0);
-            let food_num = size_s.filter(item => item === 2).length >= 5;
+            let food_num = size_s.filter(function(item) {
+                return item === 2;
+            }).length >= 5;
             if(food_bool && (!food_num)){
                 let food_location = Math.random() * (areasize * areasize);
                 let food_location_int = Math.floor(food_location);
@@ -522,7 +524,10 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
                     score: snake.length,
                     level_reached: isEndlessMode ? 1 : currentLevelIndex + 1 
                 })
-            }).then(r => r.json()).then(d => console.log(d));
+            }).then(function(response) {
+                return response.json();
+            }).then(function() {
+            });
 
             if(isWin) {
                 icon.innerText = "🎉";

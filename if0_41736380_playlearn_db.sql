@@ -3,8 +3,8 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: sql100.infinityfree.com
--- Generation Time: May 23, 2026 at 03:11 PM
--- Server version: 11.4.10-MariaDB
+-- Generation Time: May 27, 2026 at 03:27 PM
+-- Server version: 11.4.11-MariaDB
 -- PHP Version: 7.2.22
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";

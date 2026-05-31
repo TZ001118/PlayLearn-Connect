@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pattern Sprint</title>
+  <script src="/assets/js/playlearn-game-sdk.js"></script>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: Nunito, Arial, sans-serif;
+      background: linear-gradient(135deg, #f7f4ff, #e8fff7);
+      color: #0f172a;
+    }
+    .card {
+      width: min(92vw, 520px);
+      background: #fff;
+      border-radius: 28px;
+      padding: 32px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.14);
+      text-align: center;
+    }
+    h1 { margin: 0 0 8px; font-size: 34px; }
+    p { color: #64748b; font-weight: 700; }
+    .pattern {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 24px 0;
+    }
+    .tile {
+      aspect-ratio: 1;
+      border: 0;
+      border-radius: 18px;
+      background: #e2e8f0;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .tile.active { background: #6c3ff5; transform: scale(1.04); }
+    .tile.correct { background: #00b894; }
+    .tile.wrong { background: #ff7675; }
+    .primary {
+      border: 0;
+      border-radius: 999px;
+      padding: 14px 26px;
+      background: #0f172a;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Pattern Sprint</h1>
+    <p>Watch the purple tiles, then click the same pattern.</p>
+    <div id="pattern" class="pattern"></div>
+    <button id="startBtn" class="primary">Start Round</button>
+    <p id="status">Ready</p>
+  </main>
+
+  <script>
+    const board = document.getElementById('pattern');
+    const statusEl = document.getElementById('status');
+    const startBtn = document.getElementById('startBtn');
+    const tiles = [];
+    let target = [];
+    let picks = [];
+    let round = 0;
+    let score = 0;
+    const startedAt = Date.now();
+
+    for (let i = 0; i < 16; i++) {
+      const tile = document.createElement('button');
+      tile.className = 'tile';
+      tile.addEventListener('click', () => choose(i));
+      tiles.push(tile);
+      board.appendChild(tile);
+    }
+
+    function clearTiles() {
+      tiles.forEach(tile => {
+        tile.className = 'tile';
+        tile.disabled = false;
+      });
+    }
+
+    function startRound() {
+      clearTiles();
+      picks = [];
+      round++;
+      target = Array.from({ length: Math.min(3 + round, 8) }, () => Math.floor(Math.random() * 16));
+      statusEl.textContent = 'Watch carefully...';
+      tiles.forEach(tile => tile.disabled = true);
+      target.forEach((index, step) => {
+        setTimeout(() => {
+          tiles[index].classList.add('active');
+          setTimeout(() => tiles[index].classList.remove('active'), 450);
+        }, step * 650);
+      });
+      setTimeout(() => {
+        tiles.forEach(tile => tile.disabled = false);
+        statusEl.textContent = 'Repeat the pattern.';
+      }, target.length * 650 + 200);
+    }
+
+    function choose(index) {
+      if (!target.length || picks.length >= target.length) return;
+      const step = picks.length;
+      picks.push(index);
+      tiles[index].classList.add(index === target[step] ? 'correct' : 'wrong');
+
+      if (index !== target[step]) {
+        finish(false);
+      } else if (picks.length === target.length) {
+        score += 100 + round * 25;
+        if (round >= 3) finish(true);
+        else {
+          statusEl.textContent = 'Great! Next round...';
+          setTimeout(startRound, 900);
+        }
+      }
+    }
+
+    function finish(won) {
+      tiles.forEach(tile => tile.disabled = true);
+      statusEl.textContent = won ? 'Nice pattern memory!' : 'Good try. Score saved.';
+      PlayLearnGame.submitScore({
+        score,
+        levelReached: round,
+        correctAnswers: won ? target.length : Math.max(0, picks.length - 1),
+        totalQuestions: target.length,
+        durationSeconds: Math.round((Date.now() - startedAt) / 1000)
+      }).catch(() => {
+        statusEl.textContent = 'Score could not be saved.';
+      });
+    }
+
+    startBtn.addEventListener('click', startRound);
+  </script>
+</body>
+</html>

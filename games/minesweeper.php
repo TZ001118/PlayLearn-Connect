@@ -590,7 +590,8 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
                     score: 100, 
                     level_reached: currentLevelIndex
                 })
-            }).catch(e => console.error("Save failed:", e));
+            }).catch(function() {
+            });
 
             if(isWin) {
                 icon.innerText = "🎉";

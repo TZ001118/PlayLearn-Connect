@@ -108,8 +108,83 @@ body.light-mode .menu-item.active {
     margin-bottom: 20px;
 }
 
-h2, h3, h4, .card-title, .stat-card p { color: var(--text-main); }
-p, .stat-card h3 { color: var(--text-gray); }
+h2,
+h3,
+h4,
+.card-title,
+.stat-card p {
+    color: var(--text-main);
+}
+
+p,
+.stat-card h3 {
+    color: var(--text-gray);
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.68);
+    backdrop-filter: blur(6px);
+    box-sizing: border-box;
+}
+
+.modal-content {
+    width: min(720px, 94vw);
+    max-height: 86vh;
+    overflow: auto;
+    background: var(--card-dark);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-radius: 22px;
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.28);
+}
+
+.modal-header,
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 22px;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--border-color);
+    justify-content: flex-end;
+}
+
+.modal-body {
+    padding: 22px;
+}
+
+.close-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    cursor: pointer;
+    color: var(--text-main);
+    background: rgba(255,255,255,0.08);
+    font-size: 22px;
+    font-weight: 900;
+}
+
+.close-btn:hover {
+    background: rgba(255,77,77,0.22);
+    color: #ff7675;
+}
 
 /* DataTables 适配 */
 .dataTables_wrapper .dataTables_length, 
@@ -151,7 +226,10 @@ button[class*="cancel"],
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
-.btn-cancel:hover, button[onclick*="closeModal"]:hover { background-color: #c0392b !important; }
+.btn-cancel:hover,
+button[onclick*="closeModal"]:hover {
+    background-color: #c0392b !important;
+}
 
 .btn-upload,
 .btn-publish,
@@ -168,7 +246,10 @@ button[class*="upload"] {
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
-.btn-upload:hover, .btn-publish:hover { background-color: #27ae60 !important; }
+.btn-upload:hover,
+.btn-publish:hover {
+    background-color: #27ae60 !important;
+}
 
 
 /* =========================================================================
@@ -232,4 +313,49 @@ button[class*="upload"] {
     border-color: #c0392b !important;
     color: #ffffff !important;
 }
+/* PlayLearn visual alignment */
+:root {
+    --accent-purple: #6C3FF5;
+    --accent-orange: #FF9B6B;
+    --accent-yellow: #E8D754;
+    --accent-blue: #4A90E2;
+}
 
+.sidebar-header {
+    color: var(--accent-purple);
+}
+
+.menu-item:hover,
+.menu-item.active {
+    border-left-color: var(--accent-orange);
+}
+
+.stat-card,
+.content-card,
+.level-card {
+    border-radius: 18px;
+    box-shadow: 0 16px 35px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card p {
+    color: var(--accent-orange);
+    font-weight: 900;
+}
+
+.studio-btn,
+button[type="submit"],
+input[type="submit"] {
+    border-radius: 999px !important;
+    font-weight: 800 !important;
+}
+
+.diff-badge,
+.badge {
+    border-radius: 999px;
+}
+
+body.light-mode .menu-item:hover,
+body.light-mode .menu-item.active {
+    background-color: var(--accent-purple) !important;
+    border-left-color: var(--accent-orange) !important;
+}

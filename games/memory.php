@@ -27,11 +27,11 @@ if ($u && $u['status'] === 'banned') {
 $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_id']);
 ?>
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlayLearn - 记忆配对</title>
+    <title>PlayLearn - Memory Match</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
     <style>
@@ -127,6 +127,47 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
         .modal .btn-next:active { transform: translateY(5px); box-shadow: none; }
         .modal .btn-retry { background: #b2bec3; color: #2d3436; box-shadow: 0 5px 0 #636e72; }
         .modal .btn-retry:active { transform: translateY(5px); box-shadow: none; }
+        .help-btn {
+            padding: 10px 16px;
+            background: #2d3436;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: 900;
+            box-shadow: 0 4px 10px rgba(45, 52, 54, 0.18);
+            transition: transform 0.2s;
+        }
+        .help-btn:hover { transform: scale(1.05); }
+        .tutorial-card {
+            max-width: 420px;
+            text-align: left;
+        }
+        .tutorial-card h3 {
+            text-align: center;
+            color: #0984e3;
+        }
+        .tutorial-step {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            margin: 14px 0;
+            font-weight: 800;
+            color: #2d3436;
+        }
+        .tutorial-step span {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 50%;
+            background: #0984e3;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+        }
         
         @media (max-width: 500px) {
             .brand-title { font-size: 26px; }
@@ -141,7 +182,7 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
     <div class="header">
         <button class="back-btn" onclick="window.history.back()">⬅ Back</button>
         <div class="brand-title">Play<span>Learn</span></div>
-        <div style="width: 80px;"></div> 
+        <button class="help-btn" onclick="showTutorial()">Help</button>
     </div>
 
     <div class="game-wrapper">
@@ -158,6 +199,16 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
             
             <button id="modal-btn-next" class="btn-next">NEXT LEVEL ➡</button>
             <button id="modal-btn-retry" class="btn-retry">🔄 Retry Level</button>
+        </div>
+    </div>
+
+    <div id="tutorialOverlay" class="overlay">
+        <div class="modal tutorial-card">
+            <h3>How to Play</h3>
+            <div class="tutorial-step"><span>1</span><div>Tap two cards to reveal what is hidden behind them.</div></div>
+            <div class="tutorial-step"><span>2</span><div>If the two cards match, they stay cleared. If not, remember them and try again.</div></div>
+            <div class="tutorial-step"><span>3</span><div>Use fewer moves and less time to build your Memory, Focus, and Speed skills.</div></div>
+            <button class="btn-next" onclick="hideTutorial()">Start Playing</button>
         </div>
     </div>
 
@@ -197,6 +248,7 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
         };
 
         const game = new Phaser.Game(config);
+        const tutorialKey = 'playlearn_memory_tutorial_seen';
 
         let firstCard = null;
         let secondCard = null;
@@ -210,9 +262,34 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
         let movesTextHUD;
         let comboCount = 0;
         let isGameOver = false;
+        let matchAttempts = 0;
+        let successfulMatches = 0;
 
         let cardsFlippedThisTurn = 0;
         let cardsFlippedBackThisTurn = 0;
+
+        function showTutorial() {
+            document.getElementById('tutorialOverlay').style.display = 'flex';
+        }
+
+        function hideTutorial() {
+            document.getElementById('tutorialOverlay').style.display = 'none';
+            try {
+                localStorage.setItem(tutorialKey, '1');
+            } catch (error) {
+                console.warn('Tutorial preference could not be saved.');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            try {
+                if (localStorage.getItem(tutorialKey) !== '1') {
+                    setTimeout(showTutorial, 400);
+                }
+            } catch (error) {
+                setTimeout(showTutorial, 400);
+            }
+        });
 
         function create() {
             this.children.removeAll();
@@ -224,6 +301,8 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
             timeTaken = 0;
             comboCount = 0;
             isGameOver = false;
+            matchAttempts = 0;
+            successfulMatches = 0;
             
             cardsFlippedThisTurn = 0;
             cardsFlippedBackThisTurn = 0;
@@ -361,12 +440,14 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
 
         function checkMatch(scene, scaleFactor) {
             moves++;
+            matchAttempts++;
             movesTextHUD.setText(`👟 Moves: ${moves}`); 
 
             if (firstCard.emojiValue === secondCard.emojiValue) {
                 firstCard.isMatched = true;
                 secondCard.isMatched = true;
                 comboCount++; 
+                successfulMatches++;
                 
                 if(comboCount > 1) {
                     let comboText = scene.add.text(400, 120, `${comboCount}x COMBO!`, { 
@@ -458,9 +539,13 @@ $conn->query("UPDATE users SET last_seen = NOW() WHERE id = " . $_SESSION['user_
                 body: JSON.stringify({ 
                     game_name: 'Memory Match', 
                     score: finalMoves,
-                    level_reached: finalLevelReached
+                    level_reached: finalLevelReached,
+                    correct_answers: successfulMatches,
+                    total_questions: matchAttempts,
+                    duration_seconds: timeTaken
                 })
-            }).catch(error => console.error('Error saving score:', error));
+            }).catch(function() {
+            });
 
             let starDisplay = '⭐';
             let feedbackText = 'GOOD!';

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="640" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F0FBFF"/>
+      <stop offset="1" stop-color="#E9FFF7"/>
+    </linearGradient>
+    <filter id="s"><feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#00CEC9" flood-opacity=".22"/></filter>
+  </defs>
+  <rect width="640" height="420" rx="40" fill="url(#bg)"/>
+  <g filter="url(#s)">
+    <rect x="160" y="88" width="320" height="260" rx="26" fill="#B2BEC3"/>
+    <g stroke="#B2BEC3" stroke-width="8">
+      <rect x="184" y="112" width="80" height="80" rx="14" fill="#81ECEC"/>
+      <rect x="280" y="112" width="80" height="80" rx="14" fill="#fff"/>
+      <rect x="376" y="112" width="80" height="80" rx="14" fill="#81ECEC"/>
+      <rect x="184" y="208" width="80" height="80" rx="14" fill="#fff"/>
+      <rect x="280" y="208" width="80" height="80" rx="14" fill="#FFEAA7"/>
+      <rect x="376" y="208" width="80" height="80" rx="14" fill="#fff"/>
+    </g>
+    <text x="320" y="263" font-family="Nunito, Arial, sans-serif" font-size="44" font-weight="900" text-anchor="middle" fill="#D63031">3</text>
+    <circle cx="416" cy="248" r="20" fill="#2D3436"/><path d="M429 233l18-18" stroke="#2D3436" stroke-width="8" stroke-linecap="round"/><circle cx="450" cy="212" r="7" fill="#FF7675"/>
+  </g>
+  <text x="42" y="76" font-family="Nunito, Arial, sans-serif" font-size="34" font-weight="900" fill="#00A8A8">MINE SWEEPER</text>
+</svg>

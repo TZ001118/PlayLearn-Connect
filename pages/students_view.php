@@ -13,7 +13,7 @@ if ($sort === 'username') {
 
 // 2. 🌟 获取学生列表 (加入了 profile_image 和 avatar_frame)
 $students = [];
-$sql_students = "SELECT u.id, u.username, u.email, u.birthday, u.gender, u.profile_image, u.avatar_frame 
+$sql_students = "SELECT u.id, u.username, u.email, u.birthday, u.gender, u.ic_number, u.profile_image, u.avatar_frame 
                  FROM account_links al 
                  JOIN users u ON al.child_id = u.id 
                  WHERE al.parent_id = $current_parent_id" . $order_sql;
@@ -58,12 +58,13 @@ if ($res_students && $res_students->num_rows > 0) {
                         <th class="py-3 text-secondary small fw-bold text-uppercase">Email Address</th>
                         <th class="py-3 text-secondary small fw-bold text-uppercase">Gender</th>
                         <th class="py-3 text-secondary small fw-bold text-uppercase">Birthday</th>
+                        <th class="py-3 text-secondary small fw-bold text-uppercase">IC / ID</th>
                         <th class="py-3 text-secondary small fw-bold text-uppercase text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($students)): ?>
-                        <tr><td colspan="6" class="text-center py-5 text-muted">No children linked yet.</td></tr>
+                        <tr><td colspan="7" class="text-center py-5 text-muted">No children linked yet.</td></tr>
                     <?php else: ?>
                         <?php foreach ($students as $s): ?>
                         <tr>
@@ -89,6 +90,9 @@ if ($res_students && $res_students->num_rows > 0) {
                             </td>
                             <td style="color: #64748b; font-weight: 600; font-size: 14px;">
                                 <?php echo !empty($s['birthday']) ? date('M d, Y', strtotime($s['birthday'])) : 'Not set'; ?>
+                            </td>
+                            <td style="color: #64748b; font-weight: 600; font-size: 14px;">
+                                <?php echo !empty($s['ic_number']) ? htmlspecialchars($s['ic_number']) : 'Not set'; ?>
                             </td>
                             <td class="text-center">
                                 <div class="dropdown">
@@ -124,7 +128,7 @@ if ($res_students && $res_students->num_rows > 0) {
     <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
       <div class="modal-body p-4 text-center">
         <div class="text-danger mb-3"><i class="fas fa-user-times fa-3x"></i></div>
-        <h5 class="fw-bold" style="color: var(--primary-dark);">Unlink Student?</h5>
+        <h5 class="fw-bold" style="color: var(--primary-dark);">Unlink Child?</h5>
         <p class="text-muted small fw-bold">Are you sure you want to remove <strong id="unlinkName" style="color: var(--blob-orange);"></strong> from your dashboard?</p>
         <div class="d-flex gap-2 justify-content-center mt-4">
             <button class="btn btn-light px-4 border shadow-sm btn-sm fw-bold" data-bs-dismiss="modal" style="border-radius: 12px;">Cancel</button>

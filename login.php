@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PLAYLEARN - Log In</title>
     <script src="https://cdn.tailwindcss.com"></script>
-<<<<<<< HEAD
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-=======
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
     <script>
         tailwind.config = {
             theme: {
@@ -26,23 +23,11 @@
         }
     </script>
     <style>
-<<<<<<< HEAD
         .eye-ball { transition: height 0.15s ease-out; }
         .blink { height: 2px !important; overflow: hidden; }
         .blink .pupil { opacity: 0; }
         .smooth-transform { transition: transform 0.7s ease-in-out, left 0.7s ease-in-out, top 0.7s ease-in-out, height 0.7s ease-in-out; }
         
-=======
-        /* 眨眼动画过渡效果 */
-        .eye-ball { transition: height 0.15s ease-out; }
-        .blink { height: 2px !important; overflow: hidden; }
-        .blink .pupil { opacity: 0; }
-        
-        /* ✅ 修复点：在这里加上了 height 的平滑过渡，让它长高变矮也有动画了 */
-        .smooth-transform { transition: transform 0.7s ease-in-out, left 0.7s ease-in-out, top 0.7s ease-in-out, height 0.7s ease-in-out; }
-        
-        /* 右上角 Sign Up 按钮样式 (融合原版) */
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
         .signup-header-btn {
             position: absolute; top: 20px; right: 30px; z-index: 50;
             width: 100px; height: 38px; display: flex; justify-content: center; align-items: center;
@@ -51,7 +36,6 @@
             text-decoration: none; color: black; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .signup-header-btn:hover { background-color: #f8fafc; }
-<<<<<<< HEAD
 
         /* ✅ 现代化 Toast 通知样式 */
         #toast-container {
@@ -90,25 +74,16 @@
         .toast-icon { font-size: 20px; }
         .custom-toast.success .toast-icon { color: #10b981; }
         .custom-toast.error .toast-icon { color: #ef4444; }
-=======
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
     </style>
 </head>
 <body class="bg-background text-foreground">
 
-<<<<<<< HEAD
 <div id="toast-container"></div>
-=======
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
 <a href="signup.php" class="signup-header-btn">Sign Up</a>
 
 <div class="min-h-screen grid lg:grid-cols-2 overflow-hidden">
     
     <div class="relative hidden lg:flex flex-col justify-between bg-gradient-to-br from-primary/90 via-primary to-primary/80 p-12 text-primary-foreground">
-<<<<<<< HEAD
-=======
-        
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
         <div class="relative z-20">
             <div class="flex items-center gap-2 text-lg font-semibold">
                 <div class="w-8 h-8 rounded-lg bg-primary-foreground/10 backdrop-blur-sm flex items-center justify-center">
@@ -120,7 +95,6 @@
 
         <div class="relative z-20 flex items-end justify-center h-[500px]">
             <div class="relative" style="width: 550px; height: 400px;">
-<<<<<<< HEAD
                 <div id="char-purple" class="absolute bottom-0 smooth-transform" style="left: 70px; width: 180px; height: 400px; background-color: #6C3FF5; border-radius: 10px 10px 0 0; z-index: 1; transform-origin: bottom center;">
                     <div id="eyes-purple" class="absolute flex gap-8 smooth-transform" style="left: 45px; top: 40px;">
                         <div class="eye-ball w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center overflow-hidden"><div class="pupil w-[7px] h-[7px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="5"></div></div>
@@ -133,41 +107,12 @@
                         <div class="eye-ball w-[16px] h-[16px] rounded-full bg-white flex items-center justify-center overflow-hidden"><div class="pupil w-[6px] h-[6px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="4"></div></div>
                     </div>
                 </div>
-=======
-                
-                <div id="char-purple" class="absolute bottom-0 smooth-transform" style="left: 70px; width: 180px; height: 400px; background-color: #6C3FF5; border-radius: 10px 10px 0 0; z-index: 1; transform-origin: bottom center;">
-                    <div id="eyes-purple" class="absolute flex gap-8 smooth-transform" style="left: 45px; top: 40px;">
-                        <div class="eye-ball w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center overflow-hidden">
-                            <div class="pupil w-[7px] h-[7px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="5"></div>
-                        </div>
-                        <div class="eye-ball w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center overflow-hidden">
-                            <div class="pupil w-[7px] h-[7px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="5"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="char-black" class="absolute bottom-0 smooth-transform" style="left: 240px; width: 120px; height: 310px; background-color: #2D2D2D; border-radius: 8px 8px 0 0; z-index: 2; transform-origin: bottom center;">
-                    <div id="eyes-black" class="absolute flex gap-6 smooth-transform" style="left: 26px; top: 32px;">
-                        <div class="eye-ball w-[16px] h-[16px] rounded-full bg-white flex items-center justify-center overflow-hidden">
-                            <div class="pupil w-[6px] h-[6px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="4"></div>
-                        </div>
-                        <div class="eye-ball w-[16px] h-[16px] rounded-full bg-white flex items-center justify-center overflow-hidden">
-                            <div class="pupil w-[6px] h-[6px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="4"></div>
-                        </div>
-                    </div>
-                </div>
-
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
                 <div id="char-orange" class="absolute bottom-0 smooth-transform" style="left: 0px; width: 240px; height: 200px; background-color: #FF9B6B; border-radius: 120px 120px 0 0; z-index: 3; transform-origin: bottom center;">
                     <div id="eyes-orange" class="absolute flex gap-8 transition-all duration-200 ease-out" style="left: 82px; top: 90px;">
                         <div class="pupil w-[12px] h-[12px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="5"></div>
                         <div class="pupil w-[12px] h-[12px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="5"></div>
                     </div>
                 </div>
-<<<<<<< HEAD
-=======
-
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
                 <div id="char-yellow" class="absolute bottom-0 smooth-transform" style="left: 310px; width: 140px; height: 230px; background-color: #E8D754; border-radius: 70px 70px 0 0; z-index: 4; transform-origin: bottom center;">
                     <div id="eyes-yellow" class="absolute flex gap-6 transition-all duration-200 ease-out" style="left: 52px; top: 40px;">
                         <div class="pupil w-[12px] h-[12px] bg-[#2D2D2D] rounded-full transition-transform duration-100 ease-out" data-max="5"></div>
@@ -178,19 +123,11 @@
             </div>
         </div>
 
-<<<<<<< HEAD
         <div class="relative z-50 flex items-center gap-8 text-sm text-primary-foreground/60">
             <a href="privacy.php" class="hover:text-white transition-colors cursor-pointer">Privacy Policy</a>
             <a href="terms.php" class="hover:text-white transition-colors cursor-pointer">Terms of Service</a>
         </div>
         <div class="absolute inset-0 bg-white/[0.05] pointer-events-none" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px; opacity: 0.1;"></div>
-=======
-        <div class="relative z-20 flex items-center gap-8 text-sm text-primary-foreground/60">
-            <a href="#" class="hover:text-primary-foreground transition-colors">Privacy Policy</a>
-            <a href="#" class="hover:text-primary-foreground transition-colors">Terms of Service</a>
-        </div>
-        <div class="absolute inset-0 bg-white/[0.05]" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 20px 20px; opacity: 0.1;"></div>
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
     </div>
 
 
@@ -244,7 +181,6 @@
 </div>
 
 <script>
-<<<<<<< HEAD
     // ✅ Toast 通知核心函数
     function showToast(message, type = 'success') {
         const container = document.getElementById('toast-container');
@@ -265,17 +201,10 @@
         }, 3000);
     }
 
-=======
-    // === 1. 你原版的表单提交逻辑 ===
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
     const loginIdentifierInput = document.getElementById('loginIdentifier');
     const passwordInput = document.getElementById('password');
     const loginBtn = document.getElementById('loginBtn');
 
-<<<<<<< HEAD
-=======
-    // 检查两个框是否都填了
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
     function checkLoginValidity() {
         const user = loginIdentifierInput.value.trim();
         const pass = passwordInput.value;
@@ -286,10 +215,6 @@
         }
     }
 
-<<<<<<< HEAD
-=======
-    // 提交数据给 process_login.php
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
     function submitLogin() {
         const user = loginIdentifierInput.value.trim();
         const pass = passwordInput.value;
@@ -309,7 +234,6 @@
         .then(data => {
             if (data.status === "success") {
                 const displayName = data.username ? data.username : user;
-<<<<<<< HEAD
                 // ✅ 替换了原有的 alert()
                 showToast("Welcome back, " + displayName + "! Authenticating...", "success");
                 
@@ -329,14 +253,6 @@
                 showToast(data.message, "error");
                 passwordInput.value = ""; 
                 checkLoginValidity(); 
-=======
-                alert("🎉 Welcome back, " + displayName + "! Ready to play?");
-                window.location.href = "homepage.php"; // ✅ 改成你们实际的主页名字
-            } else {
-                alert("❌ Login failed: " + data.message);
-                passwordInput.value = ""; // 清空密码框
-                checkLoginValidity(); // 重新检查按钮状态
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
                 loginBtn.innerText = "Log In";
                 loginBtn.disabled = true;
             }
@@ -344,20 +260,11 @@
         .catch(error => {
             loginBtn.innerText = "Log In";
             loginBtn.disabled = false;
-<<<<<<< HEAD
             // ✅ 替换了原有的 alert()
             showToast("Network connection error. Please try again.", "error");
         });
     }
 
-=======
-            console.error('Error:', error);
-            alert("Network connection error. Please try again.");
-        });
-    }
-
-    // 忘记密码跳转逻辑
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
     function goToRecovery() {
         const currentInput = loginIdentifierInput.value.trim();
         if (currentInput !== "") {
@@ -367,16 +274,8 @@
         }
     }
 
-<<<<<<< HEAD
     const toggleBtn = document.getElementById('togglePasswordBtn');
     const eyeIcon = document.getElementById('eyeIcon');
-=======
-
-    // === 2. 炫酷的卡通人物动画逻辑 ===
-    const toggleBtn = document.getElementById('togglePasswordBtn');
-    const eyeIcon = document.getElementById('eyeIcon');
-    
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
     let mouseX = window.innerWidth / 2;
     let mouseY = window.innerHeight / 2;
     let showPassword = false;
@@ -403,7 +302,6 @@
             const rect = container.getBoundingClientRect();
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
-<<<<<<< HEAD
             let deltaX = mouseX - centerX; let deltaY = mouseY - centerY;
             
             if (passwordInput.value.length > 0 && showPassword) {
@@ -412,20 +310,6 @@
             const maxDistance = parseFloat(pupil.getAttribute('data-max') || 5);
             const distance = Math.min(Math.sqrt(deltaX ** 2 + deltaY ** 2), maxDistance);
             const angle = Math.atan2(deltaY, deltaX);
-=======
-            
-            let deltaX = mouseX - centerX; let deltaY = mouseY - centerY;
-            
-            // 如果输入了密码并且显示了明文，大家统一避嫌看地板
-            if (passwordInput.value.length > 0 && showPassword) {
-                deltaX = -50; deltaY = -40; 
-            }
-
-            const maxDistance = parseFloat(pupil.getAttribute('data-max') || 5);
-            const distance = Math.min(Math.sqrt(deltaX ** 2 + deltaY ** 2), maxDistance);
-            const angle = Math.atan2(deltaY, deltaX);
-            
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
             pupil.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
         });
     }
@@ -447,7 +331,6 @@
         const oPos = calculatePos(charOrange); const yPos = calculatePos(charYellow);
         const hasPwd = passwordInput.value.length > 0;
 
-<<<<<<< HEAD
         if (hasPwd && showPassword) {
             charPurple.style.transform = `skewX(0deg)`; charPurple.style.height = '400px';
             eyesPurple.style.left = '20px'; eyesPurple.style.top = '35px';
@@ -465,49 +348,14 @@
             eyesBlack.style.left = `${26 + bPos.faceX}px`; eyesBlack.style.top = `${32 + bPos.faceY}px`;
             charOrange.style.transform = `skewX(${oPos.skew}deg)`;
             eyesOrange.style.left = `${82 + oPos.faceX}px`; eyesOrange.style.top = `${90 + oPos.faceY}px`;
-=======
-        // 状态1：正在看明文密码 (大家统一避嫌不看，保持乖巧)
-        if (hasPwd && showPassword) {
-            charPurple.style.transform = `skewX(0deg)`; charPurple.style.height = '400px';
-            eyesPurple.style.left = '20px'; eyesPurple.style.top = '35px';
-            
-            charBlack.style.transform = `skewX(0deg)`; 
-            eyesBlack.style.left = '10px'; eyesBlack.style.top = '28px';
-            
-            charOrange.style.transform = `skewX(0deg)`; 
-            eyesOrange.style.left = '50px'; eyesOrange.style.top = '85px';
-            
-            charYellow.style.transform = `skewX(0deg)`; 
-            eyesYellow.style.left = '20px'; eyesYellow.style.top = '35px';
-            mouthYellow.style.left = '10px'; mouthYellow.style.top = '88px';
-        } 
-        // 状态2：正常跟随鼠标 (去掉了紫色小人突兀的伸脖子和对视，全部统一)
-        else {
-            charPurple.style.transform = `skewX(${pPos.skew}deg)`; charPurple.style.height = '400px';
-            eyesPurple.style.left = `${45 + pPos.faceX}px`; eyesPurple.style.top = `${40 + pPos.faceY}px`;
-            
-            charBlack.style.transform = `skewX(${bPos.skew}deg)`;
-            eyesBlack.style.left = `${26 + bPos.faceX}px`; eyesBlack.style.top = `${32 + bPos.faceY}px`;
-            
-            charOrange.style.transform = `skewX(${oPos.skew}deg)`;
-            eyesOrange.style.left = `${82 + oPos.faceX}px`; eyesOrange.style.top = `${90 + oPos.faceY}px`;
-            
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
             charYellow.style.transform = `skewX(${yPos.skew}deg)`;
             eyesYellow.style.left = `${52 + yPos.faceX}px`; eyesYellow.style.top = `${40 + yPos.faceY}px`;
             mouthYellow.style.left = `${40 + yPos.faceX}px`; mouthYellow.style.top = `${88 + yPos.faceY}px`;
         }
     }
 
-<<<<<<< HEAD
     passwordInput.addEventListener('input', () => { updateBodyPos(); checkLoginValidity(); });
     
-=======
-    // 互动事件 (删除了点击输入框时触发特殊动画的代码)
-    passwordInput.addEventListener('input', () => { updateBodyPos(); checkLoginValidity(); });
-    
-    // 密码可见性切换 (SVG无缝替换)
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
     toggleBtn.addEventListener('click', () => {
         showPassword = !showPassword;
         passwordInput.type = showPassword ? 'text' : 'password';
@@ -519,10 +367,6 @@
         updateBodyPos(); updatePupils();
     });
 
-<<<<<<< HEAD
-=======
-    // 眨眼动画
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
     function blinkLoop(charEyesId) {
         const eyes = document.querySelectorAll(`#${charEyesId} .eye-ball`);
         if(!eyes.length) return;
@@ -532,11 +376,6 @@
         }, Math.random() * 4000 + 3000);
     }
     blinkLoop('eyes-purple'); blinkLoop('eyes-black');
-<<<<<<< HEAD
-=======
-    setTimeout(updateBody);
-
->>>>>>> 4f5123f4f40ff24341cfcb8ebd54648461a4dfed
 </script>
 </body>
 </html>

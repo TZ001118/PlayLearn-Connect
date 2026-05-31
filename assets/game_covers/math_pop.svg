@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="640" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF4FB"/>
+      <stop offset="1" stop-color="#E0FBFC"/>
+    </linearGradient>
+    <filter id="s"><feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#E84393" flood-opacity=".2"/></filter>
+  </defs>
+  <rect width="640" height="420" rx="40" fill="url(#bg)"/>
+  <circle cx="510" cy="102" r="82" fill="#E84393" opacity=".12"/>
+  <circle cx="108" cy="316" r="114" fill="#00CEC9" opacity=".14"/>
+  <g filter="url(#s)" font-family="Nunito, Arial, sans-serif" font-weight="900">
+    <rect x="170" y="96" width="300" height="132" rx="30" fill="#E0FBFC" stroke="#00CEC9" stroke-width="10"/>
+    <text x="320" y="178" font-size="58" text-anchor="middle" fill="#2D3436">7 + 5</text>
+    <circle cx="208" cy="304" r="52" fill="#81ECEC"/><text x="208" y="321" font-size="42" text-anchor="middle" fill="#2D3436">9</text>
+    <circle cx="320" cy="304" r="52" fill="#E84393"/><text x="320" y="321" font-size="42" text-anchor="middle" fill="#fff">12</text>
+    <circle cx="432" cy="304" r="52" fill="#FFEAA7"/><text x="432" y="321" font-size="42" text-anchor="middle" fill="#D63031">14</text>
+  </g>
+  <text x="42" y="76" font-family="Nunito, Arial, sans-serif" font-size="34" font-weight="900" fill="#E84393">MATH POP</text>
+</svg>
